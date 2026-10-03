@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Cruise</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1c2233;--sub:#6b7491;--line:#e6e9f2;--brand:#3b5bdb;--ok:#2f9e6b;--warn:#e8890c;--bad:#d6455d}
+@media (prefers-color-scheme:dark){:root{--bg:#10131c;--card:#1a1f2d;--ink:#e9ecf5;--sub:#8f98b5;--line:#2a3042;--brand:#6c8cff}}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,"Malgun Gothic","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);display:flex;justify-content:center}
+#app{width:100%;max-width:440px;min-height:100vh;display:flex;flex-direction:column;position:relative}
+header{padding:18px 16px 8px}
+header h1{font-size:20px}
+header p{font-size:12px;color:var(--sub);margin-top:2px}
+main{flex:1;padding:8px 16px 90px}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.sub{color:var(--sub);font-size:12px}
+nav{position:fixed;bottom:0;width:100%;max-width:440px;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:10px 0 12px;color:var(--sub);font-size:11px;cursor:pointer}
+nav button b{display:block;font-size:20px;font-weight:400}
+nav button.on{color:var(--brand);font-weight:700}
+.hero{display:flex;gap:12px;align-items:center}
+.ring{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ring div{width:70px;height:70px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:18px}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+.stat div{background:var(--bg);border-radius:12px;padding:8px 2px}
+.stat b{display:block;font-size:16px}
+.row{margin-bottom:11px}
+.row .t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px}
+.seg{display:flex;background:var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;color:var(--sub);font-size:13px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:700}
+.days{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.days button{flex:none;width:44px;border:0;border-radius:12px;padding:8px 0;background:var(--card);color:var(--ink);cursor:pointer}
+.days button span{display:block;font-size:11px;color:var(--sub)}
+.days button.on{background:var(--brand);color:#fff}.days button.on span{color:#dfe6ff}
+.slot{display:flex;align-items:stretch;gap:10px;min-height:30px;border-bottom:1px solid var(--line);cursor:pointer}
+.slot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.brushbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 8px;margin:0 0 6px}
+.chips.nowrap{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.chips.nowrap .chip{flex:none;opacity:.55}
+.chips.nowrap .chip.on{opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.slot.sel{background:color-mix(in srgb,var(--bc,var(--brand)) 28%,transparent);outline:2px solid var(--bc,var(--brand));outline-offset:-2px;border-radius:6px}
+.slot .tm{width:42px;font-size:11px;color:var(--sub);padding-top:7px}
+.slot .ct{flex:1;display:flex;align-items:center;font-size:13px;padding:2px 8px;margin:3px 0;border-radius:8px}
+.slot .ct.e{color:var(--sub);border:1px dashed var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:0;border-radius:16px;padding:7px 11px;font-size:12px;cursor:pointer;color:#fff}
+.fab{position:fixed;right:max(16px,calc(50% - 204px));bottom:76px;width:56px;height:56px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:22px;box-shadow:0 4px 12px rgba(0,0,0,.25);cursor:pointer}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.sheet.show{display:flex}
+.sheet>div{background:var(--card);width:100%;max-width:440px;border-radius:20px 20px 0 0;padding:16px 16px 28px}
+.goalrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.goalrow span:first-child{flex:1}
+.step{display:flex;align-items:center;gap:8px}
+.step button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.step b{width:28px;text-align:center}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:12px;background:var(--brand);color:#fff;font-size:14px;font-weight:700;margin-top:8px;cursor:pointer}
+.btn.g{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.li{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.li .ic{font-size:22px}.li small{display:block;color:var(--sub);font-size:11px;margin-top:2px}
+.tag{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:10px;background:var(--bg);color:var(--sub)}
+.tag.ok{background:#dff5ea;color:#1b7a50}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1 id="ttl">오늘</h1><p id="sbt"></p></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+</div>
+<div class="sheet" id="sheet"><div id="sheetBody"></div></div>
+
+<script>
+// 엑셀 '목표 25' 시트 Effective @ 260901 블록의 실제 값
+const CATS=[
+ // 처음 3개: 초록 / 중간 8개: 주황 / 마지막 3개: 살색
+ ["산책 & 반트",15,"#2b8a3e",12.5],["home routine",2,"#40a35a",2.5],["Soul, 건강/운동 공부",6,"#74b816",5],
+ ["몰입 / 명상",4,"#c2410c",4.5],["coaching/강의/Edge&",6,"#d9480f",3],["AiE",10,"#e8590c",11.5],
+ ["Biz",4,"#f76707",5],["Investment",4,"#fd7e14",2],["Smart/유튜버/writing/독서",4,"#e67700",4],
+ ["Gtr연습/Art/Music",2,"#f08c00",1],["Creative/여행plan/외국어",3,"#ff9f43",3.5],
+ ["정리정돈/News",3,"#d9a07f",2],["3R",6,"#c68b6b",4],["FamDay",7,"#b07556",7.5]
+];
+// 마지막 값 = 이번 주 실제(샘플). 실제 앱에서는 time_entry 합계
+const TOTAL=CATS.reduce((a,c)=>a+c[1],0);
+const color=n=>CATS.find(c=>c[0]===n)?.[2]||"#999";
+const grid={}; // slot -> cat
+[[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
+let tab="today",range="주",day=5,sel=null;
+const days=["월","화","수","목","금","토","일"];
+const $=s=>document.querySelector(s);
+const pct=(a,b)=>Math.round(a/b*100);
+const st=p=>p>=90?"var(--ok)":p>=60?"var(--warn)":"var(--bad)";
+
+Object.keys(grid).forEach(k=>{grid[+k+15]=grid[k]}); // 기존 30분 블록 → 15분 슬롯 2개
+function slots(){const a=[];for(let h=4;h<24;h++)for(const m of [0,15,30,45]){const k=h*100+m;if(k>=430)a.push(k)}return a}
+const fmt=k=>String(Math.floor(k/100)).padStart(2,"0")+":"+String(k%100).padStart(2,"0");
+
+function renderToday(){
+ const used=Object.keys(grid).length*0.25;
+ $("#sbt").textContent="2026.10.03 (토) · 살아갈 날 14,918일";
+ return `<div class="days">${days.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${[28,29,30,1,2,3,4][i]}</button>`).join("")}</div>
+ <div class="brushbar"><div class="chips nowrap">${CATS.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
+ <div class="sub" style="margin-top:6px">${brush?`<b style="color:${color(brush)}">● ${brush}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
+ <div class="card"><h2>오늘 기록<span class="sub">${used}h / 목표 ${(TOTAL/7).toFixed(1)}h</span></h2>
+ <div class="bar"><i style="width:${Math.min(100,used/(TOTAL/7)*100)}%;background:var(--brand)"></i></div>
+ <div class="sub" style="margin-top:8px">기상 06:30 ★ · 걸음수 8,240 (Health Connect)</div></div>
+ <div class="card" style="padding:6px 14px">${slots().map(k=>{const c=grid[k];return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}22;border-left:4px solid ${color(c)}`:""}">${c||"탭하여 입력"}</div></div>`}).join("")}</div>
+ <button class="fab" title="타이머" onclick="timer()">▶</button>`;
+}
+// ── 브러시: 카테고리를 하나 고른 뒤 아래로 끌어 연속 입력 ──
+let brush=null;
+function setBrush(n){brush=brush===n?null:n;render()}
+// ── 길게 눌러 끌어서 여러 칸 입력 ──
+const ALL=slots();let selRange=[];
+const nextEnd=k=>{const i=ALL.indexOf(k)+1;return i<ALL.length?ALL[i]:2400};
+function openRange(r){
+ selRange=r;const hrs=r.length*0.25;
+ $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px">${fmt(r[0])} – ${fmt(nextEnd(r[r.length-1]))}</h2><div class="sub" style="margin-bottom:12px">${r.length}칸 · ${hrs}시간</div><div class="chips">${CATS.map(c=>`<button class="chip" style="background:${c[2]}" onclick="setSlot('${c[0]}')">${c[0]}</button>`).join("")}</div><button class="btn g" onclick="setSlot(null)">지우기</button>`;
+ $("#sheet").classList.add("show");
+}
+function setSlot(c){selRange.forEach(k=>c?grid[k]=c:delete grid[k]);closeSheet();render()}
+(function(){
+ let timer=null,active=false,startK=null,curK=null,sx=0,sy=0;
+ const main=document.getElementById("main");
+ const kAt=(x,y)=>{const e=document.elementFromPoint(x,y)?.closest(".slot");return e?+e.dataset.k:null};
+ const range=(a,b)=>{let i=ALL.indexOf(a),j=ALL.indexOf(b);if(i>j)[i,j]=[j,i];return ALL.slice(i,j+1)};
+ const paint=()=>{main.style.setProperty("--bc",brush?color(brush):"var(--brand)");const r=curK==null?[]:range(startK,curK);main.querySelectorAll(".slot").forEach(e=>e.classList.toggle("sel",r.includes(+e.dataset.k)))};
+ let lx=0,ly=0,raf=null;
+ // 화면 가장자리(위 90px / 아래 nav 위 110px)에 가까울수록 빠르게 자동 스크롤
+ const EDGE_TOP=90,EDGE_BOT=110,MAXV=14;
+ const autoScroll=()=>{
+  raf=null;if(!active)return;
+  const bot=innerHeight-60; // 하단 nav 높이 제외
+  let v=0;
+  if(ly<EDGE_TOP)v=-MAXV*Math.min(1,(EDGE_TOP-ly)/EDGE_TOP);
+  else if(ly>bot-EDGE_BOT)v=MAXV*Math.min(1,(ly-(bot-EDGE_BOT))/EDGE_BOT);
+  if(v){
+   window.scrollBy(0,v);
+   const k=kAt(lx,ly);if(k!=null&&k!==curK){curK=k;paint()}
+  }
+  raf=requestAnimationFrame(autoScroll);
+ };
+ const reset=()=>{clearTimeout(timer);timer=null;active=false;startK=curK=null;if(raf){cancelAnimationFrame(raf);raf=null}paint()};
+ main.addEventListener("pointerdown",e=>{
+  const k=kAt(e.clientX,e.clientY);if(k==null)return;
+  sx=e.clientX;sy=e.clientY;startK=curK=k;
+  lx=e.clientX;ly=e.clientY;
+  timer=setTimeout(()=>{active=true;navigator.vibrate?.(15);paint();raf=requestAnimationFrame(autoScroll)},280);
+ });
+ main.addEventListener("pointermove",e=>{
+  lx=e.clientX;ly=e.clientY;
+  if(!active){if(timer&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){clearTimeout(timer);timer=null;startK=null}return}
+  const k=kAt(e.clientX,e.clientY);if(k!=null&&k!==curK){curK=k;paint()}
+ });
+ main.addEventListener("pointerup",e=>{
+  if(startK==null)return;
+  const r=active?range(startK,curK):[startK]; // 짧게 탭하면 1칸
+  reset();
+  if(brush){r.forEach(k=>grid[k]=brush);render()}   // 브러시 모드: 선택 창 없이 바로 입력
+  else openRange(r);
+ });
+ main.addEventListener("pointercancel",reset);
+ // 드래그 중에는 화면 스크롤 방지
+ main.addEventListener("touchmove",e=>{if(active)e.preventDefault()},{passive:false});
+ main.addEventListener("contextmenu",e=>{if(e.target.closest(".slot"))e.preventDefault()});
+})();
+function closeSheet(){$("#sheet").classList.remove("show")}
+$("#sheet").onclick=e=>{if(e.target.id==="sheet")closeSheet()};
+function timer(){$("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:6px">타이머 기록</h2><div style="font-size:42px;text-align:center;margin:14px 0;font-variant-numeric:tabular-nums">00:24:18</div><div class="sub" style="text-align:center;margin-bottom:12px">AiE 진행 중</div><button class="btn" onclick="closeSheet()">■ 종료하고 저장</button>`;$("#sheet").classList.add("show")}
+
+function renderDash(){
+ const mult={"주":1,"2주":2,"연":52}[range];
+ const act=CATS.map(c=>c[3]*(range==="연"?1:1));
+ const A=act.reduce((a,b)=>a+b,0);const p=pct(A,TOTAL);
+ $("#sbt").textContent="Effective @ 260901 · 주 목표 "+TOTAL+"h";
+ return `<div class="seg">${["주","2주","연"].map(r=>`<button class="${r===range?"on":""}" onclick="range='${r}';render()">${r}</button>`).join("")}</div>
+ <div class="card"><div class="hero"><div class="ring" style="background:conic-gradient(var(--brand) ${p*3.6}deg,var(--line) 0)"><div>${p}%</div></div>
+ <div><div style="font-size:13px" class="sub">전체 달성도</div><div style="font-size:22px;font-weight:700">${(A*mult).toFixed(1)}h <span class="sub" style="font-size:13px">/ ${TOTAL*mult}h</span></div></div></div>
+ <div class="stat"><div><b>${CATS.filter((c,i)=>act[i]/c[1]>=.9).length}</b><span class="sub">달성</span></div><div><b>${CATS.filter((c,i)=>act[i]/c[1]<.6).length}</b><span class="sub">부족</span></div><div><b>${(TOTAL*52).toLocaleString()}</b><span class="sub">연환산 h</span></div></div></div>
+ <div class="card"><h2>목표 vs 실제 <span class="sub">시간</span></h2>${CATS.map((c,i)=>{const a=act[i]*mult,g=c[1]*mult,q=pct(a,g);return `<div class="row"><div class="t"><span>${c[0]}</span><span><b>${a.toFixed(1)}</b><span class="sub"> / ${g}h · ${q}%</span></span></div><div class="bar"><i style="width:${Math.min(100,q)}%;background:${st(q)}"></i></div></div>`}).join("")}</div>`;
+}
+
+const g2={};CATS.forEach(c=>g2[c[0]]=c[1]);
+function renderGoals(){
+ $("#sbt").textContent="Effective @ 260901 (개정 이력 관리)";
+ const t=Object.values(g2).reduce((a,b)=>a+b,0);
+ return `<div class="card"><h2>현재 목표 <span class="sub">합계 ${t}h · 연 ${t*52}h</span></h2>
+ ${CATS.map(c=>`<div class="goalrow"><span style="width:10px;height:10px;border-radius:3px;background:${c[2]}"></span><span>${c[0]}<div class="sub">${(g2[c[0]]/t*100).toFixed(1)}% · 연 ${g2[c[0]]*52}h</div></span><div class="step"><button onclick="adj('${c[0]}',-1)">−</button><b>${g2[c[0]]}</b><button onclick="adj('${c[0]}',1)">+</button></div></div>`).join("")}
+ <button class="btn">새 Effective 날짜로 개정 저장</button></div>
+ <div class="card"><h2>개정 이력</h2>${[["260901","AiE 신설, 76h"],["260101","독서/배움 9h, Biz 6h"],["250101","주간 목표 개정"],["240101","이제 백만장자로서 살아야 한다"]].map(h=>`<div class="li"><div class="ic">🗓️</div><div>Effective @ ${h[0]}<small>${h[1]}</small></div></div>`).join("")}</div>`;
+}
+function adj(n,d){g2[n]=Math.max(0,g2[n]+d);render()}
+
+function renderMore(){
+ $("#sbt").textContent="데이터 연동 · 가져오기 · 내보내기";
+ return `<div class="card"><h2>데이터 연동</h2>
+ <div class="li"><div class="ic">👟</div><div>Health Connect (구글 피트니스)<small>오늘 8,240보 · 10분 전 동기화</small></div><span class="tag ok">연결됨</span></div>
+ <div class="li"><div class="ic">🥗</div><div>뱅크샐러드<small>내보내기 파일(xlsx/CSV) 가져오기</small></div><span class="tag">파일 선택</span></div></div>
+ <div class="card"><h2>엑셀</h2>
+ <div class="li"><div class="ic">📥</div><div>엑셀 가져오기<small>2026 time cruise.xlsx · 목표 + 주간 29장</small></div></div>
+ <div class="li"><div class="ic">📤</div><div>엑셀 내보내기<small>기존 레이아웃 그대로 .xlsx</small></div></div></div>
+ <div class="card"><h2>이번 달 지출 (뱅크샐러드)</h2>${[["식비",412000,60],["교통",98000,14],["여가/문화",156000,23],["투자/저축",900000,100]].map(r=>`<div class="row"><div class="t"><span>${r[0]}</span><b>${r[1].toLocaleString()}원</b></div><div class="bar"><i style="width:${r[2]}%;background:var(--brand)"></i></div></div>`).join("")}<div class="sub">샘플 데이터</div></div>`;
+}
+
+const TABS=[["today","오늘","🕒",renderToday,"오늘"],["dash","대시보드","📊",renderDash,"대시보드"],["goal","목표","🎯",renderGoals,"목표 관리"],["more","연동","⚙️",renderMore,"연동 / 엑셀"]];
+function render(){
+ const t=TABS.find(x=>x[0]===tab);$("#ttl").textContent=t[4];$("#main").innerHTML=t[3]();
+ $("#nav").innerHTML=TABS.map(x=>`<button class="${x[0]===tab?"on":""}" onclick="tab='${x[0]}';render()"><b>${x[2]}</b>${x[1]}</button>`).join("");
+}
+render();
+</script>
+</body>
+</html>
