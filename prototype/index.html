@@ -39,7 +39,9 @@ nav button.on{color:var(--brand);font-weight:700}
 .days button span{display:block;font-size:11px;color:var(--sub)}
 .days button.on{background:var(--brand);color:#fff}.days button.on span{color:#dfe6ff}
 .slot{display:flex;align-items:stretch;gap:10px;min-height:30px;border-bottom:1px solid var(--line);cursor:pointer}
-.slot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:20;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.slot{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .brushbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 8px;margin:0 0 6px}
 .chips.nowrap{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
 .chips.nowrap .chip{flex:none;opacity:.55}
@@ -63,6 +65,38 @@ nav button.on{color:var(--brand);font-weight:700}
 .btn.g{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
 .li{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
 .li .ic{font-size:22px}.li small{display:block;color:var(--sub);font-size:11px;margin-top:2px}
+.tbl-wrap{overflow-x:auto;background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+table.wk{border-collapse:separate;border-spacing:0;font-size:12px;font-variant-numeric:tabular-nums;min-width:100%}
+table.wk th,table.wk td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+table.wk thead th{background:var(--card);font-weight:600}
+table.wk th.dt{font-weight:400;color:var(--sub);font-size:11px;padding-top:0}
+table.wk .cat{position:sticky;left:0;z-index:2;text-align:left;min-width:128px;max-width:150px;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+table.wk thead .cat{background:var(--card);color:var(--brand);z-index:3}
+table.wk thead .cat.sm{font-size:11px;font-weight:400;color:var(--sub)}
+table.wk tfoot .cat{background:var(--card);color:var(--ink)}
+table.wk tfoot td{font-weight:700;border-bottom:0}
+table.wk .tdy{background:color-mix(in srgb,var(--brand) 12%,transparent)}
+table.wk .sum{font-weight:700;border-left:1px solid var(--line)}
+table.wk .pc{font-weight:700}
+.achip{border:1.5px solid var(--ac);background:transparent;color:var(--ink);border-radius:16px;padding:6px 11px;font-size:12px;cursor:pointer}
+.achip.on{background:var(--ac);color:#fff}
+.chips.nowrap.sub-row{margin-top:6px;align-items:center}
+.chips.nowrap .achip{flex:none;opacity:1}
+.addact,.addrow{display:flex;gap:6px;flex:none}
+.addrow{margin:12px 0 4px}
+.addact input,.addrow input{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:6px 12px;font-size:12px;width:120px;min-width:0}
+.addrow input{flex:1;width:auto;border-radius:12px;padding:10px 12px;font-size:13px}
+.addact button,.addrow button{border:0;border-radius:16px;background:var(--brand);color:#fff;padding:6px 12px;font-size:12px;cursor:pointer}
+.addrow button{border-radius:12px}
+.slot .ct{gap:8px;overflow:hidden;white-space:nowrap}
+.slot .cn{font-size:11px;color:var(--sub);flex:none;max-width:42%;overflow:hidden;text-overflow:ellipsis}
+.slot .an{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.sumrow{padding:6px 0;border-bottom:1px solid var(--line)}
+.sumrow:last-child{border-bottom:0}
+.sumrow .t{display:flex;gap:6px;font-size:13px;margin-bottom:2px}
+.sumrow .t b,.sumrow .t span.sub{}
+.sumrow .t span.sub{margin-left:auto}
+.sumrow .t.sm{padding-left:18px;font-size:12px;color:var(--ink)}
 .tag{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:10px;background:var(--bg);color:var(--sub)}
 .tag.ok{background:#dff5ea;color:#1b7a50}
 </style>
@@ -90,6 +124,25 @@ const TOTAL=CATS.reduce((a,c)=>a+c[1],0);
 const color=n=>CATS.find(c=>c[0]===n)?.[2]||"#999";
 const grid={}; // slot -> cat
 [[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
+// 카테고리 아래 세부 activity (엑셀 주간 시트의 입력 표기에서 가져온 예시). 직접 입력하면 목록에 추가됨
+const SUBS={
+ "산책 & 반트":["산책","반트","걷기"],
+ "home routine":["roborock","wash","약 정리","공과금"],
+ "Soul, 건강/운동 공부":["운동","스트레칭","건강공부","Ski"],
+ "몰입 / 명상":["60 몰입","명상","Note 몰입"],
+ "coaching/강의/Edge&":["코칭공부","강의듣기","Edge&"],
+ "AiE":["AiE 공부","프롬프트 실습","앱 개발"],
+ "Biz":["audit read","IESBA","timesheet"],
+ "Investment":["cashflows","25 yearly","투자검토"],
+ "Smart/유튜버/writing/독서":["독서","writing","유튜브"],
+ "Gtr연습/Art/Music":["Gtr","Art","나부코"],
+ "Creative/여행plan/외국어":["5국어","여행plan","日語"],
+ "정리정돈/News":["정리","News","서류정리"],
+ "3R":["Rewind","시간정리","Routine"],
+ "FamDay":["Famday","식사","외출"]
+};
+const act={}; // slot -> 세부 activity (선택)
+Object.entries({700:"운동",800:"산책",830:"산책",900:"AiE 공부",930:"AiE 공부",1000:"프롬프트 실습",1030:"audit read",1100:"audit read",1300:"cashflows",1330:"독서",1400:"강의듣기"}).forEach(([k,v])=>{act[k]=v;act[+k+15]=v});
 let tab="today",range="주",day=5,sel=null;
 const days=["월","화","수","목","금","토","일"];
 const $=s=>document.querySelector(s);
@@ -105,25 +158,56 @@ function renderToday(){
  $("#sbt").textContent="2026.10.03 (토) · 살아갈 날 14,918일";
  return `<div class="days">${days.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${[28,29,30,1,2,3,4][i]}</button>`).join("")}</div>
  <div class="brushbar"><div class="chips nowrap">${CATS.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
- <div class="sub" style="margin-top:6px">${brush?`<b style="color:${color(brush)}">● ${brush}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
+ ${brush?`<div class="chips nowrap sub-row">${(SUBS[brush]||[]).map(a=>`<button class="achip ${brushAct===a?"on":""}" style="--ac:${color(brush)}" onclick="setBrushAct('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}
+  <span class="addact"><input id="brushIn" placeholder="+ 세부 입력" onkeydown="if(event.key==='Enter')addBrushAct()"><button onclick="addBrushAct()">추가</button></span></div>`:""}
+ <div class="sub" style="margin-top:6px">${brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
  <div class="card"><h2>오늘 기록<span class="sub">${used}h / 목표 ${(TOTAL/7).toFixed(1)}h</span></h2>
  <div class="bar"><i style="width:${Math.min(100,used/(TOTAL/7)*100)}%;background:var(--brand)"></i></div>
  <div class="sub" style="margin-top:8px">기상 06:30 ★ · 걸음수 8,240 (Health Connect)</div></div>
- <div class="card" style="padding:6px 14px">${slots().map(k=>{const c=grid[k];return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}22;border-left:4px solid ${color(c)}`:""}">${c||"탭하여 입력"}</div></div>`}).join("")}</div>
+ ${actSummary()}
+ <div class="card" style="padding:6px 14px">${slots().map(k=>{const c=grid[k],a=act[k];return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}22;border-left:4px solid ${color(c)}`:""}">${c?(a?`<span class="cn">${c}</span><b class="an">${a}</b>`:`<span>${c}</span>`):"탭하여 입력"}</div></div>`}).join("")}</div>
  <button class="fab" title="타이머" onclick="timer()">▶</button>`;
 }
 // ── 브러시: 카테고리를 하나 고른 뒤 아래로 끌어 연속 입력 ──
-let brush=null;
-function setBrush(n){brush=brush===n?null:n;render()}
+let brush=null,brushAct=null;
+function setBrush(n){brush=brush===n?null:n;brushAct=null;render()}
+function setBrushAct(a){brushAct=brushAct===a?null:a;render()}
+function addBrushAct(){
+ const v=$("#brushIn").value.trim();if(!v)return;
+ if(!SUBS[brush].includes(v))SUBS[brush].push(v);
+ brushAct=v;render();
+}
+// 오늘 카테고리 › 세부 activity 별 시간
+function actSummary(){
+ const by={};
+ Object.keys(grid).forEach(k=>{const c=grid[k],a=act[k]||"(세부 없음)";(by[c]??={});by[c][a]=(by[c][a]||0)+0.25});
+ const cats=CATS.filter(c=>by[c[0]]);
+ if(!cats.length)return "";
+ return `<div class="card"><h2>오늘 세부 activity <span class="sub">카테고리 › 활동</span></h2>${cats.map(c=>{
+  const m=by[c[0]],tot=Object.values(m).reduce((a,b)=>a+b,0);
+  return `<div class="sumrow"><div class="t"><span style="color:${c[2]}">●</span> <b>${c[0]}</b><span class="sub">${tot}h</span></div>${Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([a,h])=>`<div class="t sm"><span>› ${a}</span><span class="sub">${h}h</span></div>`).join("")}</div>`}).join("")}</div>`;
+}
 // ── 길게 눌러 끌어서 여러 칸 입력 ──
 const ALL=slots();let selRange=[];
 const nextEnd=k=>{const i=ALL.indexOf(k)+1;return i<ALL.length?ALL[i]:2400};
 function openRange(r){
  selRange=r;const hrs=r.length*0.25;
- $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px">${fmt(r[0])} – ${fmt(nextEnd(r[r.length-1]))}</h2><div class="sub" style="margin-bottom:12px">${r.length}칸 · ${hrs}시간</div><div class="chips">${CATS.map(c=>`<button class="chip" style="background:${c[2]}" onclick="setSlot('${c[0]}')">${c[0]}</button>`).join("")}</div><button class="btn g" onclick="setSlot(null)">지우기</button>`;
+ $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px">${fmt(r[0])} – ${fmt(nextEnd(r[r.length-1]))}</h2><div class="sub" style="margin-bottom:12px">${r.length}칸 · ${hrs}시간 · 1단계 카테고리</div><div class="chips">${CATS.map(c=>`<button class="chip" style="background:${c[2]}" onclick="pickCat('${c[0]}')">${c[0]}</button>`).join("")}</div><button class="btn g" onclick="setSlot(null)">지우기</button>`;
  $("#sheet").classList.add("show");
 }
-function setSlot(c){selRange.forEach(k=>c?grid[k]=c:delete grid[k]);closeSheet();render()}
+// 2단계: 카테고리 아래 세부 activity 선택 (건너뛰어도 됨)
+let pendingCat=null;
+function pickCat(c){
+ pendingCat=c;
+ const h=selRange.length*0.25;
+ $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px"><span style="color:${color(c)}">●</span> ${c}</h2><div class="sub" style="margin-bottom:12px">${fmt(selRange[0])} – ${fmt(nextEnd(selRange[selRange.length-1]))} · ${h}시간 · 2단계 세부 activity</div>
+ <div class="chips">${(SUBS[c]||[]).map(a=>`<button class="achip" style="--ac:${color(c)}" onclick="saveSlot('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}</div>
+ <div class="addrow"><input id="actIn" placeholder="새 세부 activity 직접 입력" onkeydown="if(event.key==='Enter')saveCustom()"><button onclick="saveCustom()">추가</button></div>
+ <button class="btn" onclick="saveSlot(null)">세부 없이 저장</button><button class="btn g" onclick="openRange(selRange)">← 카테고리 다시 선택</button>`;
+}
+function saveCustom(){const v=$("#actIn").value.trim();if(!v)return;if(!SUBS[pendingCat].includes(v))SUBS[pendingCat].push(v);saveSlot(v)}
+function saveSlot(a){selRange.forEach(k=>{grid[k]=pendingCat;a?act[k]=a:delete act[k]});closeSheet();render()}
+function setSlot(c){selRange.forEach(k=>{delete grid[k];delete act[k]});closeSheet();render()}
 (function(){
  let timer=null,active=false,startK=null,curK=null,sx=0,sy=0;
  const main=document.getElementById("main");
@@ -157,11 +241,24 @@ function setSlot(c){selRange.forEach(k=>c?grid[k]=c:delete grid[k]);closeSheet()
   if(!active){if(timer&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){clearTimeout(timer);timer=null;startK=null}return}
   const k=kAt(e.clientX,e.clientY);if(k!=null&&k!==curK){curK=k;paint()}
  });
+ let lastK=null,lastT=0,openT=null;
  main.addEventListener("pointerup",e=>{
   if(startK==null)return;
-  const r=active?range(startK,curK):[startK]; // 짧게 탭하면 1칸
+  const drag=active;
+  const r=drag?range(startK,curK):[startK]; // 짧게 탭하면 1칸
   reset();
-  if(brush){r.forEach(k=>grid[k]=brush);render()}   // 브러시 모드: 선택 창 없이 바로 입력
+  if(!drag){
+   const k=r[0],now=Date.now();
+   // 입력된 칸을 빠르게 두 번 탭하면 취소(삭제)
+   if(lastK===k&&now-lastT<350&&grid[k]){
+    clearTimeout(openT);lastK=null;
+    delete grid[k];delete act[k];render();toast(`${fmt(k)} 기록을 취소했어요`);return;
+   }
+   lastK=k;lastT=now;
+   // 입력된 칸은 더블탭을 기다린 뒤 선택 창을 연다 (빈 칸은 바로 연다)
+   if(!brush&&grid[k]){clearTimeout(openT);openT=setTimeout(()=>openRange(r),350);return}
+  }
+  if(brush){r.forEach(k=>{grid[k]=brush;brushAct?act[k]=brushAct:delete act[k]});render()}   // 브러시 모드: 선택 창 없이 바로 입력
   else openRange(r);
  });
  main.addEventListener("pointercancel",reset);
@@ -169,6 +266,12 @@ function setSlot(c){selRange.forEach(k=>c?grid[k]=c:delete grid[k]);closeSheet()
  main.addEventListener("touchmove",e=>{if(active)e.preventDefault()},{passive:false});
  main.addEventListener("contextmenu",e=>{if(e.target.closest(".slot"))e.preventDefault()});
 })();
+let toastT=null;
+function toast(msg){
+ let el=document.getElementById("toast");
+ if(!el){el=document.createElement("div");el.id="toast";document.body.appendChild(el)}
+ el.textContent=msg;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),1800);
+}
 function closeSheet(){$("#sheet").classList.remove("show")}
 $("#sheet").onclick=e=>{if(e.target.id==="sheet")closeSheet()};
 function timer(){$("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:6px">타이머 기록</h2><div style="font-size:42px;text-align:center;margin:14px 0;font-variant-numeric:tabular-nums">00:24:18</div><div class="sub" style="text-align:center;margin-bottom:12px">AiE 진행 중</div><button class="btn" onclick="closeSheet()">■ 종료하고 저장</button>`;$("#sheet").classList.add("show")}
@@ -183,6 +286,34 @@ function renderDash(){
  <div><div style="font-size:13px" class="sub">전체 달성도</div><div style="font-size:22px;font-weight:700">${(A*mult).toFixed(1)}h <span class="sub" style="font-size:13px">/ ${TOTAL*mult}h</span></div></div></div>
  <div class="stat"><div><b>${CATS.filter((c,i)=>act[i]/c[1]>=.9).length}</b><span class="sub">달성</span></div><div><b>${CATS.filter((c,i)=>act[i]/c[1]<.6).length}</b><span class="sub">부족</span></div><div><b>${(TOTAL*52).toLocaleString()}</b><span class="sub">연환산 h</span></div></div></div>
  <div class="card"><h2>목표 vs 실제 <span class="sub">시간</span></h2>${CATS.map((c,i)=>{const a=act[i]*mult,g=c[1]*mult,q=pct(a,g);return `<div class="row"><div class="t"><span>${c[0]}</span><span><b>${a.toFixed(1)}</b><span class="sub"> / ${g}h · ${q}%</span></span></div><div class="bar"><i style="width:${Math.min(100,q)}%;background:${st(q)}"></i></div></div>`}).join("")}</div>`;
+}
+
+// ── 대시보드 세부: 주 단위 카테고리 × 요일 집계표 (엑셀 주간 요약과 같은 구성) ──
+let unit="칸",hol=2;
+const DATES=[28,29,30,1,2,3,4];
+// 월~금은 예시 데이터, 토(오늘)는 오늘 탭의 실제 기록, 일은 아직 없음. 값은 15분 칸 수
+function weekCounts(){
+ return CATS.map((c,i)=>Array.from({length:7},(_,d)=>d<5?Math.round(c[1]/7*4*(.4+((i*7+d*5)%9)/9)):d===5?Object.keys(grid).filter(k=>grid[k]===c[0]).length:0));
+}
+function renderDetail(){
+ $("#sbt").textContent="2026.09.28 – 10.04 · 주 단위 집계 (15분 = 1칸)";
+ const W=weekCounts(),adj=(6-(hol-2)*0.5)/6; // 엑셀의 휴일수 보정: 목표 × (6−(휴일수−2)×0.5)/6
+ const f=n=>n?(unit==="칸"?n:+(n/4).toFixed(2)):"";
+ const dayTot=[0,1,2,3,4,5,6].map(d=>W.reduce((a,r)=>a+r[d],0));
+ const rows=CATS.map((c,i)=>{
+  const tot=W[i].reduce((a,b)=>a+b,0),h=tot/4,g=c[1]*adj,p=g?Math.round(h/g*100):0;
+  const dark=i>=11; // 살색 행은 어두운 글자
+  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th>${W[i].map((n,d)=>`<td class="${d===5?"tdy":""}">${f(n)}</td>`).join("")}<td class="sum">${h?h.toFixed(2).replace(/\.?0+$/,""):"0"}</td><td>${g.toFixed(1)}</td><td class="pc" style="color:${st(p)}">${p}%</td></tr>`}).join("");
+ const T=dayTot.reduce((a,b)=>a+b,0)/4,G=TOTAL*adj,TP=Math.round(T/G*100);
+ return `<div class="seg"><button class="${unit==="칸"?"on":""}" onclick="unit='칸';render()">15분 칸 수</button><button class="${unit==="시간"?"on":""}" onclick="unit='시간';render()">시간(h)</button></div>
+ <div class="card"><h2>휴일수 <span class="step"><button onclick="hol=Math.max(0,hol-1);render()">−</button><b>${hol}</b><button onclick="hol=Math.min(7,hol+1);render()">+</button></span></h2>
+ <div class="sub">목표는 주 목표 × ${adj.toFixed(2)} (휴일수 보정)로 계산돼요. 합계 ${T.toFixed(2).replace(/\.?0+$/,"")}h · 전체 달성도 ${TP}%</div></div>
+ <div class="tbl-wrap"><table class="wk"><thead>
+  <tr><th class="cat yr">2026</th>${days.map((d,i)=>`<th class="${i===5?"tdy":""}">${d}</th>`).join("")}<th>합계</th><th>목표</th><th>달성도</th></tr>
+  <tr><th class="cat sm">목표 Activity</th>${DATES.map((d,i)=>`<th class="dt ${i===5?"tdy":""}">${d}</th>`).join("")}<th class="dt">h</th><th class="dt">h</th><th class="dt">%</th></tr>
+ </thead><tbody>${rows}</tbody>
+ <tfoot><tr><th class="cat">합계</th>${dayTot.map((n,d)=>`<td class="${d===5?"tdy":""}">${f(n)}</td>`).join("")}<td class="sum">${T.toFixed(2).replace(/\.?0+$/,"")}</td><td>${G.toFixed(1)}</td><td class="pc" style="color:${st(TP)}">${TP}%</td></tr></tfoot></table></div>
+ <div class="sub" style="margin-top:8px">월~금은 예시 데이터이고, 토요일은 오늘 탭의 기록이 바로 반영돼요.</div>`;
 }
 
 const g2={};CATS.forEach(c=>g2[c[0]]=c[1]);
@@ -207,7 +338,7 @@ function renderMore(){
  <div class="card"><h2>이번 달 지출 (뱅크샐러드)</h2>${[["식비",412000,60],["교통",98000,14],["여가/문화",156000,23],["투자/저축",900000,100]].map(r=>`<div class="row"><div class="t"><span>${r[0]}</span><b>${r[1].toLocaleString()}원</b></div><div class="bar"><i style="width:${r[2]}%;background:var(--brand)"></i></div></div>`).join("")}<div class="sub">샘플 데이터</div></div>`;
 }
 
-const TABS=[["today","오늘","🕒",renderToday,"오늘"],["dash","대시보드","📊",renderDash,"대시보드"],["goal","목표","🎯",renderGoals,"목표 관리"],["more","연동","⚙️",renderMore,"연동 / 엑셀"]];
+const TABS=[["today","오늘","🕒",renderToday,"오늘"],["dash","대시보드","📊",renderDash,"대시보드"],["detail","세부","📋",renderDetail,"대시보드 세부"],["goal","목표","🎯",renderGoals,"목표 관리"],["more","연동","⚙️",renderMore,"연동 / 엑셀"]];
 function render(){
  const t=TABS.find(x=>x[0]===tab);$("#ttl").textContent=t[4];$("#main").innerHTML=t[3]();
  $("#nav").innerHTML=TABS.map(x=>`<button class="${x[0]===tab?"on":""}" onclick="tab='${x[0]}';render()"><b>${x[2]}</b>${x[1]}</button>`).join("");
