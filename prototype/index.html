@@ -10,7 +10,14 @@
 *{box-sizing:border-box;margin:0}
 body{font-family:-apple-system,"Malgun Gothic","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);display:flex;justify-content:center}
 #app{width:100%;max-width:440px;min-height:100vh;display:flex;flex-direction:column;position:relative}
-header{padding:18px 16px 8px}
+header{padding:18px 16px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+#gear{flex:none;border:0;background:var(--card);border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+[hidden]{display:none!important}
+.fld{display:block;margin-bottom:12px;font-size:13px}
+.fld span{display:block;margin-bottom:4px;color:var(--sub);font-size:12px}
+.fld input{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit}
+.fld small{display:block;margin-top:3px;color:var(--sub);font-size:11px}
+.errmsg{color:var(--bad);font-size:12px;margin:2px 0 8px;min-height:16px}
 header h1{font-size:20px}
 header p{font-size:12px;color:var(--sub);margin-top:2px}
 main{flex:1;padding:8px 16px 90px}
@@ -67,10 +74,10 @@ nav button.on{color:var(--brand);font-weight:700}
 .li .ic{font-size:22px}.li small{display:block;color:var(--sub);font-size:11px;margin-top:2px}
 .tbl-wrap{overflow-x:auto;background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 table.wk{border-collapse:separate;border-spacing:0;font-size:12px;font-variant-numeric:tabular-nums;min-width:100%}
-table.wk th,table.wk td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+table.wk th,table.wk td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
 table.wk thead th{background:var(--card);font-weight:600}
 table.wk th.dt{font-weight:400;color:var(--sub);font-size:11px;padding-top:0}
-table.wk .cat{position:sticky;left:0;z-index:2;text-align:left;min-width:128px;max-width:150px;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+table.wk .cat{position:sticky;left:0;z-index:2;text-align:left;min-width:96px;max-width:96px;padding-left:6px!important;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 table.wk thead .cat{background:var(--card);color:var(--brand);z-index:3}
 table.wk thead .cat.sm{font-size:11px;font-weight:400;color:var(--sub)}
 table.wk tfoot .cat{background:var(--card);color:var(--ink)}
@@ -78,6 +85,30 @@ table.wk tfoot td{font-weight:700;border-bottom:0}
 table.wk .tdy{background:color-mix(in srgb,var(--brand) 12%,transparent)}
 table.wk .sum{font-weight:700;border-left:1px solid var(--line)}
 table.wk .pc{font-weight:700}
+table.wk th.dtc{cursor:pointer;background:var(--card)}
+table.wk th.dtc.hol{background:color-mix(in srgb,var(--brand) 28%,var(--card));color:var(--ink)}
+table.wk th.dtc.now{text-decoration:underline;text-underline-offset:3px}
+table.wk tr.mrow th{font-weight:400;color:var(--sub);font-size:11px}
+table.wk th.hl{text-align:right;font-weight:400;color:var(--sub)}
+table.wk th.hv{color:var(--brand)}
+table.wk th.tot{background:color-mix(in srgb,var(--brand) 14%,var(--card))}
+table.wk td.tp{color:var(--brand);font-size:13px}
+table.wk tfoot td{border-top:2px solid var(--line)}.prow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:4px}
+.prow b{font-size:18px}
+.pbar{position:relative;padding:3px 0}
+.pbar .bar{height:10px}
+.pbar .tick{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ink);border-radius:1px}
+.gap{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:10px 12px}
+.gap b{font-size:22px;flex:none}
+.gap span{font-size:12px;line-height:1.5}.wknav{display:flex;gap:6px;align-items:center;margin:0 0 10px}
+.wknav button{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:10px;height:38px;min-width:38px;padding:0 10px;font-size:13px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.wknav button:disabled{opacity:.35;cursor:default}
+.wknav button.now{background:var(--brand);color:#fff;font-weight:700}
+.wknav select{flex:1;min-width:0;height:38px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit}.wknav button.xl{background:color-mix(in srgb,var(--ok) 18%,var(--card));color:var(--ink);font-weight:700}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:8px;background:var(--bg);border-radius:12px;font-size:14px;cursor:pointer}
+.opt input{margin-top:3px;flex:none}
+.opt small{display:block;color:var(--sub);font-size:11px;margin-top:2px}.daterow{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.daterow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 10px;font-size:13px;font-family:inherit}
 .achip{border:1.5px solid var(--ac);background:transparent;color:var(--ink);border-radius:16px;padding:6px 11px;font-size:12px;cursor:pointer}
 .achip.on{background:var(--ac);color:#fff}
 .chips.nowrap.sub-row{margin-top:6px;align-items:center}
@@ -103,7 +134,7 @@ table.wk .pc{font-weight:700}
 </head>
 <body>
 <div id="app">
-<header><h1 id="ttl">오늘</h1><p id="sbt"></p></header>
+<header><div><h1 id="ttl">오늘</h1><p id="sbt"></p></div><button id="gear" title="설정" aria-label="설정" onclick="openSettings()">⚙️</button></header>
 <main id="main"></main>
 <nav id="nav"></nav>
 </div>
@@ -121,7 +152,10 @@ const CATS=[
 ];
 // 마지막 값 = 이번 주 실제(샘플). 실제 앱에서는 time_entry 합계
 const TOTAL=CATS.reduce((a,c)=>a+c[1],0);
-const color=n=>CATS.find(c=>c[0]===n)?.[2]||"#999";
+// 멍(아무것도 안 하는 시간)은 엑셀에서도 따로 기록하는 항목. 목표 합계(TOTAL)에는 넣지 않고 기록용으로만 추가
+const MEONG=["멍",0,"#f3e2b3",0];
+const REC=[...CATS,MEONG];
+const color=n=>REC.find(c=>c[0]===n)?.[2]||"#999";
 const grid={}; // slot -> cat
 [[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
 // 카테고리 아래 세부 activity (엑셀 주간 시트의 입력 표기에서 가져온 예시). 직접 입력하면 목록에 추가됨
@@ -139,12 +173,39 @@ const SUBS={
  "Creative/여행plan/외국어":["5국어","여행plan","日語"],
  "정리정돈/News":["정리","News","서류정리"],
  "3R":["Rewind","시간정리","Routine"],
- "FamDay":["Famday","식사","외출"]
+ "FamDay":["Famday","식사","외출"],
+ "멍":[]
 };
 const act={}; // slot -> 세부 activity (선택)
 Object.entries({700:"운동",800:"산책",830:"산책",900:"AiE 공부",930:"AiE 공부",1000:"프롬프트 실습",1030:"audit read",1100:"audit read",1300:"cashflows",1330:"독서",1400:"강의듣기"}).forEach(([k,v])=>{act[k]=v;act[+k+15]=v});
-let tab="today",range="주",day=5,sel=null;
-const days=["월","화","수","목","금","토","일"];
+// ── 설정: 생일, 해당연도 시작일·끝일 (기기에 저장). 주 단위 기록이라 기간은 7일의 배수여야 함 ──
+// 기본값: 시작·끝은 엑셀 주간 시트 범위(251229 ~ 261221 시트의 2주 → 2027-01-03). 생일은 엑셀에 없어 임시 가정값
+const DEFAULT_CFG={birth:"1967-08-07",start:"2025-12-29",end:"2027-01-03"};
+const WD=["일","월","화","수","목","금","토"];
+const DAY=864e5,p2=v=>String(v).padStart(2,"0");
+const toU=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN};
+const toS=u=>{const d=new Date(u);return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}`};
+function loadCfg(){
+ try{const c=JSON.parse(localStorage.getItem("tc-settings")||"null");if(c&&!isNaN(toU(c.birth))&&!isNaN(toU(c.start))&&!isNaN(toU(c.end)))return c}catch(e){}
+ return {...DEFAULT_CFG};
+}
+let cfg=loadCfg();
+// 오늘 날짜 기준 값(앱을 열 때마다, 날짜가 바뀌면 다시 계산)
+function todayInfo(){
+ const n=new Date(),t=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+ const s=toU(cfg.start),e=toU(cfg.end),weeks=Math.max(1,Math.round(((e-s)/DAY+1)/7));
+ const raw=Math.floor((t-s)/(7*DAY)),wk=Math.min(Math.max(raw,0),weeks-1);
+ const w0=s+wk*7*DAY,idx=Math.floor((t-w0)/DAY); // idx: 이번 주 안에서 오늘의 위치(범위 밖이면 0~6을 벗어남)
+ const dates=[...Array(7)].map((_,i)=>new Date(w0+i*DAY));
+ const b=new Date(toU(cfg.birth)),end100=Date.UTC(b.getUTCFullYear()+100,b.getUTCMonth(),b.getUTCDate());
+ const mid=new Date((s+e)/2);
+ return {idx,sel:Math.min(Math.max(idx,0),6),dates,names:dates.map(d=>WD[d.getUTCDay()]),
+  todayU:t,wk,weekNo:wk+1,weeks,inRange:raw>=0&&raw<weeks,
+  live:Math.floor((t-toU(cfg.birth))/DAY),left:Math.floor((end100-t)/DAY),
+  full:`${n.getFullYear()}.${p2(n.getMonth()+1)}.${p2(n.getDate())} (${WD[n.getDay()]})`,
+  year:mid.getUTCFullYear(),
+  week:`${dates[0].getUTCFullYear()}.${p2(dates[0].getUTCMonth()+1)}.${p2(dates[0].getUTCDate())} – ${p2(dates[6].getUTCMonth()+1)}.${p2(dates[6].getUTCDate())}`};
+}let tab="today",range="주",day=todayInfo().sel,sel=null,curDay=todayInfo().full;
 const $=s=>document.querySelector(s);
 const pct=(a,b)=>Math.round(a/b*100);
 const st=p=>p>=90?"var(--ok)":p>=60?"var(--warn)":"var(--bad)";
@@ -155,9 +216,10 @@ const fmt=k=>String(Math.floor(k/100)).padStart(2,"0")+":"+String(k%100).padStar
 
 function renderToday(){
  const used=Object.keys(grid).length*0.25;
- $("#sbt").textContent="2026.10.03 (토) · 살아갈 날 14,918일";
- return `<div class="days">${days.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${[28,29,30,1,2,3,4][i]}</button>`).join("")}</div>
- <div class="brushbar"><div class="chips nowrap">${CATS.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
+ const t=todayInfo();
+ $("#sbt").textContent=`${t.full} · 살아온 날 ${t.live.toLocaleString()}일 · 살아갈 날 ${t.left.toLocaleString()}일`;
+ return `<div class="days">${t.names.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${t.dates[i].getUTCDate()}</button>`).join("")}</div>
+ <div class="brushbar"><div class="chips nowrap">${REC.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
  ${brush?`<div class="chips nowrap sub-row">${(SUBS[brush]||[]).map(a=>`<button class="achip ${brushAct===a?"on":""}" style="--ac:${color(brush)}" onclick="setBrushAct('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}
   <span class="addact"><input id="brushIn" placeholder="+ 세부 입력" onkeydown="if(event.key==='Enter')addBrushAct()"><button onclick="addBrushAct()">추가</button></span></div>`:""}
  <div class="sub" style="margin-top:6px">${brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
@@ -181,7 +243,7 @@ function addBrushAct(){
 function actSummary(){
  const by={};
  Object.keys(grid).forEach(k=>{const c=grid[k],a=act[k]||"(세부 없음)";(by[c]??={});by[c][a]=(by[c][a]||0)+0.25});
- const cats=CATS.filter(c=>by[c[0]]);
+ const cats=REC.filter(c=>by[c[0]]);
  if(!cats.length)return "";
  return `<div class="card"><h2>오늘 세부 activity <span class="sub">카테고리 › 활동</span></h2>${cats.map(c=>{
   const m=by[c[0]],tot=Object.values(m).reduce((a,b)=>a+b,0);
@@ -192,7 +254,7 @@ const ALL=slots();let selRange=[];
 const nextEnd=k=>{const i=ALL.indexOf(k)+1;return i<ALL.length?ALL[i]:2400};
 function openRange(r){
  selRange=r;const hrs=r.length*0.25;
- $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px">${fmt(r[0])} – ${fmt(nextEnd(r[r.length-1]))}</h2><div class="sub" style="margin-bottom:12px">${r.length}칸 · ${hrs}시간 · 1단계 카테고리</div><div class="chips">${CATS.map(c=>`<button class="chip" style="background:${c[2]}" onclick="pickCat('${c[0]}')">${c[0]}</button>`).join("")}</div><button class="btn g" onclick="setSlot(null)">지우기</button>`;
+ $("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:4px">${fmt(r[0])} – ${fmt(nextEnd(r[r.length-1]))}</h2><div class="sub" style="margin-bottom:12px">${r.length}칸 · ${hrs}시간 · 1단계 카테고리</div><div class="chips">${REC.map(c=>`<button class="chip" style="background:${c[2]};${c===MEONG?"color:#5b4a1e":""}" onclick="pickCat('${c[0]}')">${c[0]}</button>`).join("")}</div><button class="btn g" onclick="setSlot(null)">지우기</button>`;
  $("#sheet").classList.add("show");
 }
 // 2단계: 카테고리 아래 세부 activity 선택 (건너뛰어도 됨)
@@ -289,33 +351,215 @@ function renderDash(){
 }
 
 // ── 대시보드 세부: 주 단위 카테고리 × 요일 집계표 (엑셀 주간 요약과 같은 구성) ──
-let unit="칸",hol=2;
-const DATES=[28,29,30,1,2,3,4];
-// 월~금은 예시 데이터, 토(오늘)는 오늘 탭의 실제 기록, 일은 아직 없음. 값은 15분 칸 수
-function weekCounts(){
- return CATS.map((c,i)=>Array.from({length:7},(_,d)=>d<5?Math.round(c[1]/7*4*(.4+((i*7+d*5)%9)/9)):d===5?Object.keys(grid).filter(k=>grid[k]===c[0]).length:0));
+let holMap={}; // 주 번호(0부터) → 휴일 요일 위치. 없으면 토·일을 휴일로 자동 지정. 날짜 칸을 탭하면 토글
+const holSet=t=>holMap[t.wk]?new Set(holMap[t.wk]):new Set(t.dates.map((d,i)=>[0,6].includes(d.getUTCDay())?i:-1).filter(i=>i>=0));
+function toggleHol(d){const v=viewInfo(),s=holSet(v);s.has(d)?s.delete(d):s.add(d);holMap[v.wk]=[...s];render()}
+// 15분 칸 수. 지난 요일은 예시, 오늘은 오늘 탭의 실제 기록, 이후는 비어 있음 (마지막 행 = 멍)
+// 하루치 15분 칸 수 (REC 순서). 지난 날짜는 예시, 오늘은 오늘 탭의 실제 기록, 이후는 0
+function dayCounts(u,todayU){
+ const dn=Math.floor(u/DAY);
+ return REC.map((c,i)=>u>todayU?0:u===todayU?Object.keys(grid).filter(k=>grid[k]===c[0]).length:Math.round((c===MEONG?2:c[1]/7*4)*(.4+((i*7+dn*5)%9)/9)));
+}
+function weekCounts(t){
+ const cols=t.dates.map(d=>dayCounts(d.getTime(),t.todayU));
+ return REC.map((_,i)=>cols.map(col=>col[i]));
+}// ── 주간 표: 다른 주(과거·미래)로 이동 ──
+let viewWk=null; // null이면 이번 주
+function weekInfo(k){ // k번째 주(0부터)의 날짜 정보
+ const t=todayInfo(),w0=toU(cfg.start)+k*7*DAY,dates=[...Array(7)].map((_,i)=>new Date(w0+i*DAY));
+ return {...t,viewing:k!==t.wk,wk:k,weekNo:k+1,dates,names:dates.map(d=>WD[d.getUTCDay()]),idx:Math.floor((t.todayU-w0)/DAY),inRange:true,
+  week:`${dates[0].getUTCFullYear()}.${p2(dates[0].getUTCMonth()+1)}.${p2(dates[0].getUTCDate())} – ${p2(dates[6].getUTCMonth()+1)}.${p2(dates[6].getUTCDate())}`};
+}
+function viewInfo(){const t=todayInfo();return viewWk===null||viewWk===t.wk?{...t,viewing:false}:weekInfo(viewWk)}
+function setWk(k){const t=todayInfo();k=Math.min(Math.max(k,0),t.weeks-1);viewWk=k===t.wk?null:k;render()}
+function moveWk(d){const t=todayInfo();setWk((viewWk===null?t.wk:viewWk)+d)}
+function weekNav(t){
+ const W=t.weeks,cur=todayInfo().wk,i=t.wk;
+ const lab=k=>{const a=new Date(toU(cfg.start)+k*7*DAY),b=new Date(toU(cfg.start)+(k*7+6)*DAY);return `${p2(a.getUTCMonth()+1)}.${p2(a.getUTCDate())}–${p2(b.getUTCMonth()+1)}.${p2(b.getUTCDate())}`};
+ return `<div class="wknav"><button onclick="moveWk(-1)" aria-label="이전 주" ${i<=0?"disabled":""}>◀</button>
+  <select id="wkSel" onchange="setWk(+this.value)">${Array.from({length:W},(_,k)=>`<option value="${k}" ${k===i?"selected":""}>제${k+1}주 · ${lab(k)}${k===cur?" (이번 주)":""}</option>`).join("")}</select>
+  <button onclick="moveWk(1)" aria-label="다음 주" ${i>=W-1?"disabled":""}>▶</button>
+  ${i!==cur?`<button class="now" onclick="setWk(${cur})">이번 주</button>`:""}<button class="xl" onclick="openExport()" title="엑셀로 내보내기">엑셀 ⬇</button></div>`;
+}
+// ── 주별 data 엑셀 내보내기 (요약 시트 + 주별 시트) ──
+const r1=v=>Math.round(v*10)/10,r2=v=>Math.round(v*100)/100;
+function weekModel(t){ // 주간 표와 같은 계산 (휴일수 보정, 멍 시간 보정)
+ const HS=holSet(t),H=HS.size,W=weekCounts(t),sumRow=r=>r.reduce((a,b)=>a+b,0);
+ const meongH=sumRow(W[W.length-1])/4,adj=(6-(H-2)*0.5)/6,goal=c=>c[1]*(adj-meongH/TOTAL);
+ const dayTot=[...Array(7)].map((_,d)=>W.reduce((a,r)=>a+r[d],0));
+ const rows=REC.map((c,i)=>{const tot=sumRow(W[i]),h=tot/4,g=c===MEONG?null:goal(c);return {name:c[0],cells:W[i],tot,h,g,p:g?h/g:null}});
+ const totH=sumRow(dayTot)/4,Gsum=CATS.reduce((a,c)=>a+goal(c),0);
+ return {t,H,rows,dayTot,tot:sumRow(dayTot),totH,Gsum,TP:totH/Gsum};
+}
+function weekSheet(m){
+ const t=m.t,D=t.dates,aoa=[];
+ aoa.push([t.year,...D.map(d=>d.getUTCMonth()+1),"","","휴일수",m.H]);
+ aoa.push(["",...D.map(d=>d.getUTCDate()),"total","","목표","달성도"]);
+ aoa.push(["목표 Activity",...t.names,"칸","h","h","%"]);
+ m.rows.forEach(r=>aoa.push([r.name,...r.cells.map(n=>n||""),r.tot,r2(r.h),r.g==null?"":r1(r.g),r.p==null?"":r.p]));
+ aoa.push(["합계",...m.dayTot,m.tot,r2(m.totH),r1(m.Gsum),m.TP]);
+ const ws=XLSX.utils.aoa_to_sheet(aoa);
+ for(let r=3;r<aoa.length;r++){const c=ws[XLSX.utils.encode_cell({r,c:11})];if(c&&typeof c.v==="number")c.z="0%"}
+ ws["!cols"]=[{wch:26},...Array(7).fill({wch:5}),{wch:7},{wch:7},{wch:7},{wch:8}];
+ return ws;
+}
+function buildWorkbook(a,b,withSheets){
+ const wb=XLSX.utils.book_new(),ms=[];
+ for(let k=a;k<=b;k++)ms.push(weekModel(weekInfo(k)));
+ const head=["주차","시작","끝",...REC.map(c=>c[0]+"(h)"),"합계(h)","목표(h)","달성도"];
+ const aoa=[head,...ms.map((m,i)=>[`제${a+i+1}주`,toS(m.t.dates[0].getTime()),toS(m.t.dates[6].getTime()),...m.rows.map(r=>r2(r.h)),r2(m.totH),r1(m.Gsum),m.TP])];
+ const sum=XLSX.utils.aoa_to_sheet(aoa);
+ for(let r=1;r<aoa.length;r++){const c=sum[XLSX.utils.encode_cell({r,c:head.length-1})];if(c&&typeof c.v==="number")c.z="0%"}
+ sum["!cols"]=[{wch:8},{wch:11},{wch:11},...REC.map(()=>({wch:12})),{wch:10},{wch:10},{wch:8}];
+ XLSX.utils.book_append_sheet(wb,sum,"요약");
+ if(withSheets)ms.forEach(m=>XLSX.utils.book_append_sheet(wb,weekSheet(m),toS(m.t.dates[0].getTime()).slice(2).replace(/-/g,""))); // 시트 이름: 시작일 YYMMDD (엑셀과 같은 방식)
+ return wb;
+}
+let xlsxP=null;
+function loadXlsx(){ // 내보낼 때만 불러옴
+ if(window.XLSX)return Promise.resolve();
+ return xlsxP||(xlsxP=new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>{xlsxP=null;no(new Error("load"))};document.head.appendChild(s)}));
+}
+function openExport(){
+ const t=todayInfo(),v=viewInfo(),cur=Math.min(t.wk,t.weeks-1);
+ $("#sheetBody").innerHTML=`<h2 style="font-size:16px;margin-bottom:4px">엑셀로 내보내기</h2><div class="sub" style="margin-bottom:12px">주별로 정리해서 .xlsx 파일로 저장해요</div>
+ <label class="opt"><input type="radio" name="xr" value="one" ${v.viewing?"checked":""}><span>지금 보는 주만 <small>제${v.wk+1}주 · ${v.week}</small></span></label>
+ <label class="opt"><input type="radio" name="xr" value="todate" ${v.viewing?"":"checked"}><span>오늘까지 <small>제1~${cur+1}주</small></span></label>
+ <label class="opt"><input type="radio" name="xr" value="all"><span>해당연도 전체 <small>제1~${t.weeks}주</small></span></label>
+ <label class="opt"><input type="checkbox" id="xSheets" checked><span>주별 시트도 만들기 <small>끄면 요약 시트만 만들어요</small></span></label>
+ <div class="errmsg" id="xErr"></div>
+ <button class="btn" id="xGo" onclick="exportXlsx()">내보내기</button>`;
+ $("#sheet").classList.add("show");
+}
+async function exportXlsx(){
+ const t=todayInfo(),v=viewInfo(),mode=document.querySelector('input[name="xr"]:checked').value,withSheets=$("#xSheets").checked;
+ const [a,b]=mode==="one"?[v.wk,v.wk]:mode==="all"?[0,t.weeks-1]:[0,Math.min(t.wk,t.weeks-1)];
+ const btn=$("#xGo");btn.disabled=true;btn.textContent="만드는 중…";
+ try{
+  await loadXlsx();
+  const wb=buildWorkbook(a,b,withSheets),s=toS(toU(cfg.start)+a*7*DAY).replace(/-/g,""),e=toS(toU(cfg.start)+(b*7+6)*DAY).replace(/-/g,"");
+  XLSX.writeFile(wb,`TimeCruise_weekly_${s}-${e}.xlsx`);
+  closeSheet();toast(`제${a+1}~${b+1}주 엑셀 파일을 만들었어요`);
+ }catch(err){
+  $("#xErr").textContent=err&&err.message==="load"?"엑셀 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.":"파일을 만들지 못했어요. 다시 시도해 주세요.";
+  btn.disabled=false;btn.textContent="내보내기";
+ }
 }
 function renderDetail(){
- $("#sbt").textContent="2026.09.28 – 10.04 · 주 단위 집계 (15분 = 1칸)";
- const W=weekCounts(),adj=(6-(hol-2)*0.5)/6; // 엑셀의 휴일수 보정: 목표 × (6−(휴일수−2)×0.5)/6
- const f=n=>n?(unit==="칸"?n:+(n/4).toFixed(2)):"";
- const dayTot=[0,1,2,3,4,5,6].map(d=>W.reduce((a,r)=>a+r[d],0));
- const rows=CATS.map((c,i)=>{
-  const tot=W[i].reduce((a,b)=>a+b,0),h=tot/4,g=c[1]*adj,p=g?Math.round(h/g*100):0;
-  const dark=i>=11; // 살색 행은 어두운 글자
-  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th>${W[i].map((n,d)=>`<td class="${d===5?"tdy":""}">${f(n)}</td>`).join("")}<td class="sum">${h?h.toFixed(2).replace(/\.?0+$/,""):"0"}</td><td>${g.toFixed(1)}</td><td class="pc" style="color:${st(p)}">${p}%</td></tr>`}).join("");
- const T=dayTot.reduce((a,b)=>a+b,0)/4,G=TOTAL*adj,TP=Math.round(T/G*100);
- return `<div class="seg"><button class="${unit==="칸"?"on":""}" onclick="unit='칸';render()">15분 칸 수</button><button class="${unit==="시간"?"on":""}" onclick="unit='시간';render()">시간(h)</button></div>
- <div class="card"><h2>휴일수 <span class="step"><button onclick="hol=Math.max(0,hol-1);render()">−</button><b>${hol}</b><button onclick="hol=Math.min(7,hol+1);render()">+</button></span></h2>
- <div class="sub">목표는 주 목표 × ${adj.toFixed(2)} (휴일수 보정)로 계산돼요. 합계 ${T.toFixed(2).replace(/\.?0+$/,"")}h · 전체 달성도 ${TP}%</div></div>
- <div class="tbl-wrap"><table class="wk"><thead>
-  <tr><th class="cat yr">2026</th>${days.map((d,i)=>`<th class="${i===5?"tdy":""}">${d}</th>`).join("")}<th>합계</th><th>목표</th><th>달성도</th></tr>
-  <tr><th class="cat sm">목표 Activity</th>${DATES.map((d,i)=>`<th class="dt ${i===5?"tdy":""}">${d}</th>`).join("")}<th class="dt">h</th><th class="dt">h</th><th class="dt">%</th></tr>
- </thead><tbody>${rows}</tbody>
- <tfoot><tr><th class="cat">합계</th>${dayTot.map((n,d)=>`<td class="${d===5?"tdy":""}">${f(n)}</td>`).join("")}<td class="sum">${T.toFixed(2).replace(/\.?0+$/,"")}</td><td>${G.toFixed(1)}</td><td class="pc" style="color:${st(TP)}">${TP}%</td></tr></tfoot></table></div>
- <div class="sub" style="margin-top:8px">월~금은 예시 데이터이고, 토요일은 오늘 탭의 기록이 바로 반영돼요.</div>`;
+ if(dmode==="range")return renderRange(todayInfo());
+ const t=viewInfo(),TD=t.idx,HS=holSet(t),H=HS.size;
+ $("#sbt").textContent=`${t.week} · 제${t.weekNo}주 / ${t.weeks}주${t.inRange?"":" (해당연도 밖)"} · 15분 = 1칸`;
+ const W=weekCounts(t),sumRow=r=>r.reduce((a,b)=>a+b,0);
+ const meongH=sumRow(W[W.length-1])/4;
+ // 엑셀의 목표 보정: 주 목표 × (6−(휴일수−2)×0.5)/6 − 주 목표 × 멍 시간/주 목표 합계
+ const adj=(6-(H-2)*0.5)/6,goal=c=>c[1]*(adj-meongH/TOTAL);
+ const n2=v=>String(Math.round(v*100)/100);
+ const dayTot=[...Array(7)].map((_,d)=>W.reduce((a,r)=>a+r[d],0));
+ const row=(c,i)=>{
+  const tot=sumRow(W[i]),h=tot/4,g=c===MEONG?null:goal(c),p=g?Math.round(h/g*100):null;
+  const dark=i>=11; // 살색·멍 행은 어두운 글자
+  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th>${W[i].map((n,d)=>`<td class="${d===TD?"tdy":""}">${n||""}</td>`).join("")}<td class="sum">${tot}</td><td>${n2(h)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td></tr>`;
+ };
+ const totH=sumRow(dayTot)/4,Gsum=CATS.reduce((a,c)=>a+goal(c),0),TP=Math.round(totH/Gsum*100);
+ return detailSeg()+weekNav(t)+`<div class="tbl-wrap"><table class="wk"><thead>
+  <tr class="mrow"><th class="cat yr">${t.year}</th>${t.dates.map(d=>`<th>${d.getUTCMonth()+1}</th>`).join("")}<th colspan="2"></th><th class="hl">휴일수</th><th class="hv">${H}</th></tr>
+  <tr><th class="cat"></th>${t.dates.map((d,i)=>`<th class="dtc ${HS.has(i)?"hol":""} ${i===TD?"now":""}" onclick="toggleHol(${i})">${d.getUTCDate()}</th>`).join("")}<th colspan="2" class="tot">total</th><th class="tot">목표</th><th class="tot">달성도</th></tr>
+  <tr><th class="cat sm">목표 Activity</th>${t.names.map(d=>`<th class="dt">${d}</th>`).join("")}<th class="dt">칸</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th></tr>
+ </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
+ <tfoot><tr><th class="cat"></th>${dayTot.map((n,d)=>`<td class="${d===TD?"tdy":""}">${n}</td>`).join("")}<td class="sum">${sumRow(dayTot)}</td><td>${n2(totH)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td></tr></tfoot></table></div>
+ <div class="sub" style="margin-top:8px">파란 날짜는 휴일이에요(날짜를 탭하면 바뀜). ${TD>=0&&TD<=6?`지난 요일은 예시 데이터이고, 오늘(${WD[new Date().getDay()]}요일)은 오늘 탭의 기록이 바로 반영돼요.`:t.wk<todayInfo().wk?"지난 주는 예시 데이터예요.":"아직 오지 않은 주라 기록이 없어요."}</div>`;
 }
-
+// ── 세부data: 기간 집계 ──
+let dmode="week",pre="wk",rf="",rt="";
+const PRESETS=[["wk","이번 주"],["mo","이번 달"],["q","이번 분기"],["yr","연 누적"],["custom","직접 입력"]];
+const fmtD=u=>{const d=new Date(u);return `${d.getUTCFullYear()}.${p2(d.getUTCMonth()+1)}.${p2(d.getUTCDate())}`};
+function detailSeg(){
+ return `<div class="seg"><button class="${dmode==="week"?"on":""}" onclick="dmode='week';render()">주간</button><button class="${dmode==="range"?"on":""}" onclick="dmode='range';render()">기간 집계</button></div>`;
+}
+function setPre(p,t){
+ pre=p;
+ if(p==="custom"&&(!rf||!rt)){const [a,b]=rangeOf("q",t);rf=toS(a);rt=toS(b)} // 직접 입력의 처음 값은 이번 분기
+ render();
+}
+function setCustom(){rf=$("#rf").value;rt=$("#rt").value;render()}
+// 분기: 달력 분기(1~3월, 4~6월, 7~9월, 10~12월) 기준. 한 주의 4일 이상이 속한 분기로 그 주를 계산한다
+// (한 주는 7일이라 4일째 날짜가 어느 분기인지만 보면 됨). done = 이미 끝난 주 수(진행 중인 주 제외)
+function quarterOf(t){
+ const W=t.weeks,s=toU(cfg.start),rawWk=Math.floor((t.todayU-s)/(7*DAY));
+ const key=i=>{const d=new Date(s+(i*7+3)*DAY);return d.getUTCFullYear()*4+Math.floor(d.getUTCMonth()/3)};
+ const wk=Math.min(Math.max(rawWk,0),W-1),k=key(wk);
+ let qa=wk,qb=wk;
+ while(qa>0&&key(qa-1)===k)qa--;
+ while(qb<W-1&&key(qb+1)===k)qb++;
+ const qW=qb-qa+1;
+ return {rawWk,qa,qb,qW,qNo:k%4+1,qYear:Math.floor(k/4),done:Math.min(qW,Math.max(0,rawWk-qa)),qStartU:s+qa*7*DAY,qEndU:s+(qb+1)*7*DAY-DAY};
+}function rangeOf(p,t){
+ const td=t.todayU,d=new Date(td);
+ if(p==="wk")return [t.dates[0].getTime(),t.dates[6].getTime()];
+ if(p==="q"){const q=quarterOf(t);return [q.qStartU,Math.min(td,q.qEndU)]}
+ if(p==="mo")return [Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1),td];
+ if(p==="yr")return [toU(cfg.start),Math.min(td,toU(cfg.end))];
+ return [toU(rf),toU(rt)];
+}
+function renderRange(t){
+ const [fU,tU]=rangeOf(pre,t),bad=isNaN(fU)||isNaN(tU)||tU<fU||(tU-fU)/DAY>800;
+ $("#sbt").textContent=`기간 집계 · 15분 = 1칸`;
+ const chips=`<div class="chips nowrap sub-row" style="margin:0 0 10px">${PRESETS.map(([k,n])=>`<button class="achip ${pre===k?"on":""}" style="--ac:var(--brand)" onclick="setPre('${k}',todayInfo())">${n}</button>`).join("")}</div>`;
+ const custom=pre==="custom"?`<div class="daterow"><input type="date" id="rf" value="${rf}" onchange="setCustom()"><span class="sub">~</span><input type="date" id="rt" value="${rt}" onchange="setCustom()"></div>`:"";
+ if(bad)return detailSeg()+chips+custom+`<div class="card"><div class="errmsg">${isNaN(fU)||isNaN(tU)?"시작일과 끝일을 모두 입력해 주세요.":tU<fU?"끝일이 시작일보다 앞이에요.":"기간은 800일 이하로 정해 주세요."}</div></div>`;
+ const nd=(tU-fU)/DAY+1,weeks=nd/7,tot=REC.map(()=>0);
+ for(let u=fU;u<=tU;u+=DAY)dayCounts(u,t.todayU).forEach((n,i)=>tot[i]+=n);
+ const meongH=tot[tot.length-1]/4;
+ // 주간 표와 같은 보정: 주 목표 × 주 수 − 주 목표 × 멍 시간/주 목표 합계 (휴일 보정은 주 단위라 생략)
+ const goal=c=>c[1]*(weeks-meongH/TOTAL);
+ const n2=v=>String(Math.round(v*100)/100),totH=tot.reduce((a,b)=>a+b,0)/4;
+ const Gsum=CATS.reduce((a,c)=>a+goal(c),0),TP=Math.round(totH/Gsum*100);
+ const row=(c,i)=>{
+  const h=tot[i]/4,g=c===MEONG?null:goal(c),p=g?Math.round(h/g*100):null,dark=i>=11;
+  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th><td class="sum">${n2(h)}</td><td>${n2(h/weeks)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td><td>${totH?Math.round(h/totH*100):0}%</td></tr>`;
+ };
+ // 이번 분기: 해당연도를 주 단위로 4등분(13주씩, 남는 주는 4분기)해 끝난 주만 비교 / 연 누적: 해당연도 전체 일수 기준
+ let prog="";
+ const sg=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(1);
+ const catH=(a,b)=>{let h=0;for(let u=a;u<=b;u+=DAY)dayCounts(u,t.todayU).slice(0,CATS.length).forEach(n=>h+=n);return h/4}; // 멍 제외 시간
+ const mk=o=>{
+  const diff=(o.rate-o.dRate)*100,gapH=o.actual-o.paceH,col=diff>=0?"var(--ok)":diff>=-5?"var(--warn)":"var(--bad)";
+  return `<div class="card"><h2>진행 현황 <span class="sub">${o.sub}</span></h2>
+  <div class="prow"><span>시간 진행률</span><b>${(o.rate*100).toFixed(1)}%</b></div>
+  <div class="pbar"><div class="bar"><i style="width:${Math.min(100,o.rate*100)}%;background:${col}"></i></div><u class="tick" style="left:${Math.min(100,o.dRate*100)}%"></u></div>
+  <div class="sub" style="margin:4px 0 10px">${n2(o.actual)}h / 목표 ${n2(o.goalFull)}h · 막대 위 검은 선이 ${o.dName}이에요</div>
+  <div class="prow"><span>${o.dName}</span><b>${(o.dRate*100).toFixed(1)}%</b></div>
+  <div class="sub" style="margin-bottom:12px">${o.dText}</div>
+  <div class="gap" style="color:${col}"><b>${sg(diff)}%p</b><span>${diff>=0?o.dName+"보다 앞서 있어요":o.dName+"보다 뒤처져 있어요"}<br>페이스 기준 ${n2(o.paceH)}h보다 ${Math.abs(gapH).toFixed(1)}시간 ${gapH>=0?"더":"덜"} 했어요</span></div>
+  <div class="sub" style="margin-top:10px">지금 속도를 유지하면 기간 끝에 약 ${n2(o.proj)}h (목표의 ${Math.round(o.proj/o.goalFull*100)}%)가 돼요.</div>${o.extra||""}</div>`;
+ };
+ const s0=toU(cfg.start);
+ const inCur=(rawWk,a,b)=>rawWk>=a&&rawWk<=b?`<div class="sub" style="margin-top:6px">이번 주(${rawWk+1}주차)는 진행 중이라 비교에서 빼요 · 지금까지 ${n2(catH(s0+rawWk*7*DAY,t.todayU))}h</div>`:"";
+ if(pre==="q"){
+  const q=quarterOf(t),done=q.done;
+  const wkSub=`${q.qYear}년 ${q.qNo}분기 · ${q.qa+1}–${q.qb+1}주차 (${q.qW}주)`;
+  const cur=inCur(q.rawWk,q.qa,q.qb)+`<div class="sub" style="margin-top:6px">달력 분기 기준이고, 한 주의 4일 이상이 속한 분기로 그 주를 계산해요.</div>`;
+  if(!done)prog=`<div class="card"><h2>진행 현황 <span class="sub">${wkSub}</span></h2><div class="sub">끝난 주가 아직 없어서 비교할 수 없어요. 첫 주가 끝나면 계산돼요.</div>${cur}</div>`;
+  else{
+   const actual=catH(q.qStartU,q.qStartU+done*7*DAY-1),goalFull=TOTAL*q.qW;
+   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/q.qW,actual,goalFull,paceH:TOTAL*done,proj:actual/done*q.qW,dName:"주 진행률",dText:`${done}주 / ${q.qW}주 완료 (끝난 주 기준)`,extra:cur});
+  }
+ }else if(pre==="yr"){
+  const W=t.weeks,rawWk=Math.floor((t.todayU-s0)/(7*DAY)),done=Math.min(W,Math.max(0,rawWk));
+  const wkSub=`해당연도 ${fmtD(s0)} – ${fmtD(toU(cfg.end))} (${W}주)`,cur=inCur(rawWk,0,W-1);
+  if(!done)prog=`<div class="card"><h2>진행 현황 <span class="sub">${wkSub}</span></h2><div class="sub">끝난 주가 아직 없어서 비교할 수 없어요. 첫 주가 끝나면 계산돼요.</div>${cur}</div>`;
+  else{
+   const actual=catH(s0,s0+done*7*DAY-1),goalFull=TOTAL*W;
+   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/W,actual,goalFull,paceH:TOTAL*done,proj:actual/done*W,dName:"주 진행률",dText:`${done}주 / ${W}주 완료 (끝난 주 기준)`,extra:cur});
+  }
+ } return detailSeg()+chips+custom+`<div class="card" style="padding:10px 14px"><b>${fmtD(fU)} – ${fmtD(tU)}</b> <span class="sub">· ${nd}일 (${n2(weeks)}주) · 합계 ${n2(totH)}h</span>${tU>t.todayU?`<div class="sub" style="margin-top:4px">오늘 이후 날짜는 기록이 없어 0으로 계산돼요.</div>`:""}</div>${prog}
+ <div class="tbl-wrap"><table class="wk"><thead>
+  <tr><th class="cat sm">목표 Activity</th><th class="tot">합계</th><th class="tot">주평균</th><th class="tot">목표</th><th class="tot">달성도</th><th class="tot">비중</th></tr>
+  <tr><th class="cat"></th><th class="dt">h</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th><th class="dt">%</th></tr>
+ </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
+ <tfoot><tr><th class="cat"></th><td class="sum">${n2(totH)}</td><td>${n2(totH/weeks)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td><td>100%</td></tr></tfoot></table></div>
+ <div class="sub" style="margin-top:8px">지난 날짜는 예시 데이터이고, 오늘은 오늘 탭의 기록이 반영돼요. 목표는 주 목표 × 주 수에서 멍 시간 비율을 뺀 값이에요.</div>`;
+}
 const g2={};CATS.forEach(c=>g2[c[0]]=c[1]);
 function renderGoals(){
  $("#sbt").textContent="Effective @ 260901 (개정 이력 관리)";
@@ -338,11 +582,54 @@ function renderMore(){
  <div class="card"><h2>이번 달 지출 (뱅크샐러드)</h2>${[["식비",412000,60],["교통",98000,14],["여가/문화",156000,23],["투자/저축",900000,100]].map(r=>`<div class="row"><div class="t"><span>${r[0]}</span><b>${r[1].toLocaleString()}원</b></div><div class="bar"><i style="width:${r[2]}%;background:var(--brand)"></i></div></div>`).join("")}<div class="sub">샘플 데이터</div></div>`;
 }
 
-const TABS=[["today","오늘","🕒",renderToday,"오늘"],["dash","대시보드","📊",renderDash,"대시보드"],["detail","세부","📋",renderDetail,"대시보드 세부"],["goal","목표","🎯",renderGoals,"목표 관리"],["more","연동","⚙️",renderMore,"연동 / 엑셀"]];
+// ── 설정창 (헤더의 ⚙️) ──
+function openSettings(){
+ $("#sheetBody").innerHTML=`<h2 style="font-size:16px;margin-bottom:12px">설정</h2>
+ <label class="fld"><span>생년월일</span><input type="date" id="sBirth" value="${cfg.birth}" oninput="checkSettings()"><small>살아온 날과 살아갈 날(100세 기준) 계산에 써요</small></label>
+ <label class="fld"><span>해당연도 시작일</span><input type="date" id="sStart" value="${cfg.start}" oninput="checkSettings()"></label>
+ <label class="fld"><span>해당연도 끝일</span><input type="date" id="sEnd" value="${cfg.end}" oninput="checkSettings()"><small>주 단위로 기록하므로 시작일부터 끝일까지가 7일의 배수여야 해요</small></label>
+ <div class="sub" id="sInfo" style="margin-bottom:4px"></div><div class="errmsg" id="sErr"></div>
+ <button class="btn" id="sSave" onclick="saveSettings()">저장</button>
+ <button class="btn g" id="sFix" onclick="fixEnd()" hidden>끝일을 7일 단위로 맞추기</button>
+ <button class="btn g" onclick="resetSettings()">엑셀 기본값으로</button>`;
+ $("#sheet").classList.add("show");checkSettings();
+}
+const readSettings=()=>({birth:$("#sBirth").value,start:$("#sStart").value,end:$("#sEnd").value});
+function validateCfg(c){
+ const b=toU(c.birth),s=toU(c.start),e=toU(c.end),n=new Date(),t=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+ if(isNaN(b)||isNaN(s)||isNaN(e))return {err:"날짜를 모두 입력해 주세요."};
+ if(b>=t)return {err:"생년월일은 오늘보다 이전이어야 해요."};
+ if(e<=s)return {err:"끝일은 시작일보다 뒤여야 해요."};
+ const nd=(e-s)/DAY+1;
+ if(nd%7)return {err:`주 단위 기록이라 기간이 7일의 배수여야 해요. 지금은 ${nd}일이에요.`,fix:s+Math.max(1,Math.round(nd/7))*7*DAY-DAY};
+ return {ok:true,nd,weeks:nd/7,s,e};
+}
+function checkSettings(){
+ const v=validateCfg(readSettings());
+ $("#sSave").disabled=!v.ok;$("#sSave").style.opacity=v.ok?1:.45;
+ $("#sErr").textContent=v.err||"";
+ $("#sFix").hidden=!v.fix;$("#sFix").dataset.fix=v.fix?toS(v.fix):"";
+ $("#sInfo").textContent=v.ok?`${WD[new Date(v.s).getUTCDay()]}요일 시작 ~ ${WD[new Date(v.e).getUTCDay()]}요일 끝 · ${v.weeks}주 (${v.nd}일)`:"";
+}
+function fixEnd(){$("#sEnd").value=$("#sFix").dataset.fix;checkSettings()}
+function saveSettings(){
+ const c=readSettings();if(!validateCfg(c).ok)return;
+ cfg=c;try{localStorage.setItem("tc-settings",JSON.stringify(cfg))}catch(e){}
+ holMap={};viewWk=null;closeSheet();day=todayInfo().sel;render();toast("설정을 저장했어요");
+}
+function resetSettings(){
+ $("#sBirth").value=DEFAULT_CFG.birth;$("#sStart").value=DEFAULT_CFG.start;$("#sEnd").value=DEFAULT_CFG.end;checkSettings();
+}
+
+const TABS=[["today","오늘","🕒",renderToday,"오늘"],["dash","대시보드","📊",renderDash,"대시보드"],["detail","세부data","📋",renderDetail,"대시보드 세부data"],["goal","목표","🎯",renderGoals,"목표 관리"],["more","연동","⚙️",renderMore,"연동 / 엑셀"]];
 function render(){
  const t=TABS.find(x=>x[0]===tab);$("#ttl").textContent=t[4];$("#main").innerHTML=t[3]();
  $("#nav").innerHTML=TABS.map(x=>`<button class="${x[0]===tab?"on":""}" onclick="tab='${x[0]}';render()"><b>${x[2]}</b>${x[1]}</button>`).join("");
 }
+// 앱을 열어 둔 채 날짜가 바뀌면(자정 이후 다시 열 때) 오늘 날짜로 갱신
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible"&&todayInfo().full!==curDay){curDay=todayInfo().full;day=todayInfo().sel;render()}
+});
 render();
 </script>
 </body>
