@@ -52,6 +52,7 @@ nav button.on{color:var(--brand);font-weight:700}
 .brushbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 8px;margin:0 0 6px}
 .chips.nowrap{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
 .chips.nowrap .chip{flex:none;opacity:.55}
+.chip.blank{background:var(--card);color:var(--ink);border:1.5px dashed var(--sub)}
 .chips.nowrap .chip.on{opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
 .slot.sel{background:color-mix(in srgb,var(--bc,var(--brand)) 28%,transparent);outline:2px solid var(--bc,var(--brand));outline-offset:-2px;border-radius:6px}
 .slot .tm{width:42px;font-size:11px;color:var(--sub);padding-top:7px}
@@ -140,7 +141,9 @@ table.wk tfoot td{border-top:2px solid var(--line)}.prow{display:flex;justify-co
 </div>
 <div class="sheet" id="sheet"><div id="sheetBody"></div></div>
 
+<script src="data.js" onerror="void 0"></script>
 <script>
+// 엑셀
 // 엑셀 '목표 25' 시트 Effective @ 260901 블록의 실제 값
 const CATS=[
  // 처음 3개: 초록 / 중간 8개: 주황 / 마지막 3개: 살색
@@ -156,8 +159,33 @@ const TOTAL=CATS.reduce((a,c)=>a+c[1],0);
 const MEONG=["멍",0,"#f3e2b3",0];
 const REC=[...CATS,MEONG];
 const color=n=>REC.find(c=>c[0]===n)?.[2]||"#999";
+// ── 엑셀에서 가져온 실제 기록(data.js, 개인 데이터라 GitHub에는 없음). 없으면 예시 데이터로 동작 ──
+const HAS_REAL=!!(window.TC_DATA&&TC_DATA.days);
+const REAL_DAY={},REAL_MARK=(HAS_REAL&&TC_DATA.marks)||{};
+if(HAS_REAL){
+ const map=TC_DATA.cats.map(n=>REC.findIndex(c=>c[0]===n));
+ Object.entries(TC_DATA.days).forEach(([k,arr])=>{const v=REC.map(()=>0);arr.forEach((n,i)=>{if(map[i]>=0)v[map[i]]+=n});REAL_DAY[k]=v});
+}
+// 카테고리는 엑셀 행 순서(위치) 기준 15개(14개 + 멍). 이름은 시기(Effective)마다 다를 수 있어 시기별 이름을 따로 둔다 (이름으로 합치거나 바꾸지 않음)
+// 목표는 엑셀 '목표 25' 시트의 블록 그대로: 250101 / 260101 / 260901. 위치 5번은 독서/배움 → 260901부터 AiE, 8번은 Smart/유튜버/writing → Smart/유튜버/writing/독서/배움
+const N2601=["산책 & 반트","home routine","Soul, 건강/운동 공부","몰입 / 명상","coaching/강의/Edge&","독서 / 배움","Biz","Investment","Smart/유튜버/writing","Gtr연습/Art/Music","Creative/여행plan/외국어","정리정돈/News","3R","FamDay"];
+const GOALSETS=[
+ {from:"2000-01-01",label:"250101",names:N2601,g:[13,3,7,4,6,9,6,4,3,2,3,3,6,7]},
+ {from:"2026-01-01",label:"260101",names:N2601,g:[15,2,6,4,6,9,6,4,3,2,3,3,6,7]},
+ {from:"2026-09-01",label:"260901",names:CATS.map(c=>c[0]),g:CATS.map(c=>c[1])}
+];
+const setAt=u=>{const k=toS(u);let g=GOALSETS[0];GOALSETS.forEach(s=>{if(s.from<=k)g=s});return g};
+const goalAt=(name,u)=>{const i=CATS.findIndex(c=>c[0]===name);return i<0?0:setAt(u).g[i]||0}; // 이름은 현재 이름 → 위치로 바꿔서 그 시기의 목표를 찾음
+// 기간 [a,b] 안에서 위치 i의 이름들(중간에 이름이 바뀌었으면 여러 개)
+function namesIn(i,a,b){
+ if(i>=CATS.length)return ["멍"];
+ const out=[],ka=toS(a),kb=toS(b);
+ GOALSETS.forEach((s,n)=>{const end=n+1<GOALSETS.length?GOALSETS[n+1].from:"9999-12-31";if(s.from<=kb&&end>ka){const nm=s.names[i];if(out[out.length-1]!==nm)out.push(nm)}});
+ return out;
+}
+const labelIn=(i,a,b)=>namesIn(i,a,b).join(" → ");
 const grid={}; // slot -> cat
-[[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
+if(!HAS_REAL)[[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
 // 카테고리 아래 세부 activity (엑셀 주간 시트의 입력 표기에서 가져온 예시). 직접 입력하면 목록에 추가됨
 const SUBS={
  "산책 & 반트":["산책","반트","걷기"],
@@ -177,7 +205,7 @@ const SUBS={
  "멍":[]
 };
 const act={}; // slot -> 세부 activity (선택)
-Object.entries({700:"운동",800:"산책",830:"산책",900:"AiE 공부",930:"AiE 공부",1000:"프롬프트 실습",1030:"audit read",1100:"audit read",1300:"cashflows",1330:"독서",1400:"강의듣기"}).forEach(([k,v])=>{act[k]=v;act[+k+15]=v});
+if(!HAS_REAL)Object.entries({700:"운동",800:"산책",830:"산책",900:"AiE 공부",930:"AiE 공부",1000:"프롬프트 실습",1030:"audit read",1100:"audit read",1300:"cashflows",1330:"독서",1400:"강의듣기"}).forEach(([k,v])=>{act[k]=v;act[+k+15]=v});
 // ── 설정: 생일, 해당연도 시작일·끝일 (기기에 저장). 주 단위 기록이라 기간은 7일의 배수여야 함 ──
 // 기본값: 시작·끝은 엑셀 주간 시트 범위(251229 ~ 261221 시트의 2주 → 2027-01-03). 생일은 엑셀에 없어 임시 가정값
 const DEFAULT_CFG={birth:"1967-08-07",start:"2025-12-29",end:"2027-01-03"};
@@ -210,7 +238,7 @@ const $=s=>document.querySelector(s);
 const pct=(a,b)=>Math.round(a/b*100);
 const st=p=>p>=90?"var(--ok)":p>=60?"var(--warn)":"var(--bad)";
 
-Object.keys(grid).forEach(k=>{grid[+k+15]=grid[k]}); // 기존 30분 블록 → 15분 슬롯 2개
+Object.keys(grid).forEach(k=>{grid[+k+15]=grid[k]}); // 기존 30분 블록 → 15분 슬롯 2개 (예시 입력)
 function slots(){const a=[];for(let h=4;h<24;h++)for(const m of [0,15,30,45]){const k=h*100+m;if(k>=430)a.push(k)}return a}
 const fmt=k=>String(Math.floor(k/100)).padStart(2,"0")+":"+String(k%100).padStart(2,"0");
 
@@ -219,18 +247,19 @@ function renderToday(){
  const t=todayInfo();
  $("#sbt").textContent=`${t.full} · 살아온 날 ${t.live.toLocaleString()}일 · 살아갈 날 ${t.left.toLocaleString()}일`;
  return `<div class="days">${t.names.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${t.dates[i].getUTCDate()}</button>`).join("")}</div>
- <div class="brushbar"><div class="chips nowrap">${REC.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
- ${brush?`<div class="chips nowrap sub-row">${(SUBS[brush]||[]).map(a=>`<button class="achip ${brushAct===a?"on":""}" style="--ac:${color(brush)}" onclick="setBrushAct('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}
+ <div class="brushbar"><div class="chips nowrap"><button class="chip blank ${brush===BLANK?"on":""}" onclick="setBrush('${BLANK}')">블랭크</button>${REC.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
+ ${brush&&brush!==BLANK?`<div class="chips nowrap sub-row">${(SUBS[brush]||[]).map(a=>`<button class="achip ${brushAct===a?"on":""}" style="--ac:${color(brush)}" onclick="setBrushAct('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}
   <span class="addact"><input id="brushIn" placeholder="+ 세부 입력" onkeydown="if(event.key==='Enter')addBrushAct()"><button onclick="addBrushAct()">추가</button></span></div>`:""}
- <div class="sub" style="margin-top:6px">${brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
+ <div class="sub" style="margin-top:6px">${brush===BLANK?`<b>● 블랭크</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 한 번에 비워져요 (다시 누르면 해제)`:brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
  <div class="card"><h2>오늘 기록<span class="sub">${used}h / 목표 ${(TOTAL/7).toFixed(1)}h</span></h2>
  <div class="bar"><i style="width:${Math.min(100,used/(TOTAL/7)*100)}%;background:var(--brand)"></i></div>
- <div class="sub" style="margin-top:8px">기상 06:30 ★ · 걸음수 8,240 (Health Connect)</div></div>
+ <div class="sub" style="margin-top:8px">${HAS_REAL?`기상 ${REAL_MARK[toS(todayInfo().todayU)]||"기록 없음"} · 걸음수는 Health Connect 연동 후 표시`:"기상 06:30 ★ · 걸음수 8,240 (Health Connect)"}</div></div>
  ${actSummary()}
  <div class="card" style="padding:6px 14px">${slots().map(k=>{const c=grid[k],a=act[k];return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}22;border-left:4px solid ${color(c)}`:""}">${c?(a?`<span class="cn">${c}</span><b class="an">${a}</b>`:`<span>${c}</span>`):"탭하여 입력"}</div></div>`}).join("")}</div>
  <button class="fab" title="타이머" onclick="timer()">▶</button>`;
 }
 // ── 브러시: 카테고리를 하나 고른 뒤 아래로 끌어 연속 입력 ──
+const BLANK="__blank__"; // 블랭크(지우기) 브러시
 let brush=null,brushAct=null;
 function setBrush(n){brush=brush===n?null:n;brushAct=null;render()}
 function setBrushAct(a){brushAct=brushAct===a?null:a;render()}
@@ -320,7 +349,8 @@ function setSlot(c){selRange.forEach(k=>{delete grid[k];delete act[k]});closeShe
    // 입력된 칸은 더블탭을 기다린 뒤 선택 창을 연다 (빈 칸은 바로 연다)
    if(!brush&&grid[k]){clearTimeout(openT);openT=setTimeout(()=>openRange(r),350);return}
   }
-  if(brush){r.forEach(k=>{grid[k]=brush;brushAct?act[k]=brushAct:delete act[k]});render()}   // 브러시 모드: 선택 창 없이 바로 입력
+  if(brush===BLANK){r.forEach(k=>{delete grid[k];delete act[k]});render()}   // 블랭크 브러시: 끌어서 비우기
+  else if(brush){r.forEach(k=>{grid[k]=brush;brushAct?act[k]=brushAct:delete act[k]});render()}   // 브러시 모드: 선택 창 없이 바로 입력
   else openRange(r);
  });
  main.addEventListener("pointercancel",reset);
@@ -339,28 +369,64 @@ $("#sheet").onclick=e=>{if(e.target.id==="sheet")closeSheet()};
 function timer(){$("#sheetBody").innerHTML=`<h2 style="font-size:15px;margin-bottom:6px">타이머 기록</h2><div style="font-size:42px;text-align:center;margin:14px 0;font-variant-numeric:tabular-nums">00:24:18</div><div class="sub" style="text-align:center;margin-bottom:12px">AiE 진행 중</div><button class="btn" onclick="closeSheet()">■ 종료하고 저장</button>`;$("#sheet").classList.add("show")}
 
 function renderDash(){
- const mult={"주":1,"2주":2,"연":52}[range];
- const act=CATS.map(c=>c[3]*(range==="연"?1:1));
- const A=act.reduce((a,b)=>a+b,0);const p=pct(A,TOTAL);
- $("#sbt").textContent="Effective @ 260901 · 주 목표 "+TOTAL+"h";
+ const t=todayInfo(),mult={"주":1,"2주":2,"연":52}[range],n1=v=>(Math.round(v*10)/10).toString();
+ let act,goals,sub,labs=CATS.map(c=>c[0]);
+ if(HAS_REAL){ // 엑셀에서 가져온 실제 기록: 끝난 주만 합산 (주=지난 주, 2주=지난 2주, 연=올해 끝난 주 누적)
+  const s0=toU(cfg.start),done=Math.min(t.weeks,Math.max(0,Math.floor((t.todayU-s0)/(7*DAY))));
+  const wn=Math.min(range==="주"?1:range==="2주"?2:done,done),from=s0+(done-wn)*7*DAY,to=s0+done*7*DAY-1;
+  act=CATS.map(()=>0);
+  for(let u=from;u<=to;u+=DAY){dayCounts(u,t.todayU).slice(0,CATS.length).forEach((n,i)=>act[i]+=n/4)}
+  goals=wn?targetOver(from,to).by:CATS.map(()=>0);
+  if(wn)labs=CATS.map((c,i)=>labelIn(i,from,to)); // 주마다 휴일·멍을 반영한 목표
+  sub=wn?`제${done-wn+1}${wn>1?"~"+done:""}주 · 끝난 ${wn}주 기준 · 휴일·멍 반영한 목표`:"끝난 주가 아직 없어요";
+ }else{
+  act=CATS.map(c=>c[3]*mult);goals=CATS.map(c=>c[1]*mult);sub="Effective @ 260901 · 주 목표 "+TOTAL+"h";
+ }
+ const A=act.reduce((a,b)=>a+b,0),G=goals.reduce((a,b)=>a+b,0),p=G?pct(A,G):0;
+ $("#sbt").textContent=sub;
  return `<div class="seg">${["주","2주","연"].map(r=>`<button class="${r===range?"on":""}" onclick="range='${r}';render()">${r}</button>`).join("")}</div>
- <div class="card"><div class="hero"><div class="ring" style="background:conic-gradient(var(--brand) ${p*3.6}deg,var(--line) 0)"><div>${p}%</div></div>
- <div><div style="font-size:13px" class="sub">전체 달성도</div><div style="font-size:22px;font-weight:700">${(A*mult).toFixed(1)}h <span class="sub" style="font-size:13px">/ ${TOTAL*mult}h</span></div></div></div>
- <div class="stat"><div><b>${CATS.filter((c,i)=>act[i]/c[1]>=.9).length}</b><span class="sub">달성</span></div><div><b>${CATS.filter((c,i)=>act[i]/c[1]<.6).length}</b><span class="sub">부족</span></div><div><b>${(TOTAL*52).toLocaleString()}</b><span class="sub">연환산 h</span></div></div></div>
- <div class="card"><h2>목표 vs 실제 <span class="sub">시간</span></h2>${CATS.map((c,i)=>{const a=act[i]*mult,g=c[1]*mult,q=pct(a,g);return `<div class="row"><div class="t"><span>${c[0]}</span><span><b>${a.toFixed(1)}</b><span class="sub"> / ${g}h · ${q}%</span></span></div><div class="bar"><i style="width:${Math.min(100,q)}%;background:${st(q)}"></i></div></div>`}).join("")}</div>`;
+ <div class="card"><div class="hero"><div class="ring" style="background:conic-gradient(var(--brand) ${Math.min(100,p)*3.6}deg,var(--line) 0)"><div>${p}%</div></div>
+ <div><div style="font-size:13px" class="sub">전체 달성도 (멍 제외)</div><div style="font-size:22px;font-weight:700">${n1(A)}h <span class="sub" style="font-size:13px">/ ${n1(G)}h</span></div></div></div>
+ <div class="stat"><div><b>${CATS.filter((c,i)=>goals[i]>0&&act[i]/goals[i]>=.9).length}</b><span class="sub">달성</span></div><div><b>${CATS.filter((c,i)=>goals[i]>0&&act[i]/goals[i]<.6).length}</b><span class="sub">부족</span></div><div><b>${(TOTAL*52).toLocaleString()}</b><span class="sub">연환산 h</span></div></div></div>
+ <div class="card"><h2>목표 vs 실제 <span class="sub">시간</span></h2>${CATS.map((c,i)=>{const a=act[i],g=goals[i],q=g?pct(a,g):null;return `<div class="row"><div class="t"><span>${labs[i]}</span><span><b>${n1(a)}</b><span class="sub"> / ${n1(g)}h${q==null?" · 목표 없음":" · "+q+"%"}</span></span></div><div class="bar"><i style="width:${q==null?0:Math.min(100,q)}%;background:${q==null?"var(--line)":st(q)}"></i></div></div>`}).join("")}</div>`;
 }
-
 // ── 대시보드 세부: 주 단위 카테고리 × 요일 집계표 (엑셀 주간 요약과 같은 구성) ──
 let holMap={}; // 주 번호(0부터) → 휴일 요일 위치. 없으면 토·일을 휴일로 자동 지정. 날짜 칸을 탭하면 토글
 const holSet=t=>holMap[t.wk]?new Set(holMap[t.wk]):new Set(t.dates.map((d,i)=>[0,6].includes(d.getUTCDay())?i:-1).filter(i=>i>=0));
 function toggleHol(d){const v=viewInfo(),s=holSet(v);s.has(d)?s.delete(d):s.add(d);holMap[v.wk]=[...s];render()}
 // 15분 칸 수. 지난 요일은 예시, 오늘은 오늘 탭의 실제 기록, 이후는 비어 있음 (마지막 행 = 멍)
 // 하루치 15분 칸 수 (REC 순서). 지난 날짜는 예시, 오늘은 오늘 탭의 실제 기록, 이후는 0
-function dayCounts(u,todayU){
- const dn=Math.floor(u/DAY);
- return REC.map((c,i)=>u>todayU?0:u===todayU?Object.keys(grid).filter(k=>grid[k]===c[0]).length:Math.round((c===MEONG?2:c[1]/7*4)*(.4+((i*7+dn*5)%9)/9)));
+// ── 주 목표 계산 규칙 ──
+// ① 주말을 포함한 휴일이 3일 이상이면, 추가 휴일의 목표는 50%로 줄인다 → 총량 × (6−(휴일수−2)×0.5)/6 (휴일수 2 이하면 그대로)
+// ② 그 총량에서 멍 시간을 빼면 그 주의 목표 시간이 되고, 카테고리별 목표도 같은 비율로 줄인다
+function weekGoalInfo(t){
+ const H=holSet(t).size,adjH=H>2?(6-(H-2)*0.5)/6:1;
+ let m=0;t.dates.forEach(d=>{m+=dayCounts(d.getTime(),t.todayU)[REC.length-1]});
+ const meongH=m/4,w0=t.dates[0].getTime(),ratio=adjH-meongH/TOTAL;
+ return {H,adjH,meongH,ratio,total:TOTAL*ratio,goal:name=>goalAt(name,w0)*ratio};
 }
-function weekCounts(t){
+// 기간 [a,b](날짜 ms)의 카테고리별 목표(CATS 순서)와 총 목표: 날짜가 속한 주의 목표를 7등분해서 더함
+function targetOver(a,b){
+ const s0=toU(cfg.start),cache={},by=CATS.map(()=>0);let total=0;
+ for(let u=a;u<=b;u+=DAY){
+  const k=Math.floor((u-s0)/(7*DAY)),g=cache[k]||(cache[k]=weekGoalInfo(weekInfo(k)));
+  CATS.forEach((c,i)=>{by[i]+=g.goal(c[0])/7});total+=g.total/7;
+ }
+ return {by,total};
+}
+const weekTotalGoal=k=>weekGoalInfo(weekInfo(k)).total; // k번째 주의 총 목표(h)
+function dayCounts(u,todayU){
+ const live=()=>REC.map(c=>Object.keys(grid).filter(k=>grid[k]===c[0]).length);
+ if(u>todayU)return REC.map(()=>0);
+ if(HAS_REAL){
+  const real=REAL_DAY[toS(u)];
+  if(u===todayU){const l=live();return l.some(n=>n>0)||!real?l:real} // 오늘: 앱에 입력한 게 있으면 그것, 없으면 엑셀 기록
+  return real||REC.map(()=>0);
+ }
+ if(u===todayU)return live();
+ const dn=Math.floor(u/DAY); // 실제 데이터가 없을 때의 예시
+ return REC.map((c,i)=>Math.round((c===MEONG?2:c[1]/7*4)*(.4+((i*7+dn*5)%9)/9)));
+}function weekCounts(t){
  const cols=t.dates.map(d=>dayCounts(d.getTime(),t.todayU));
  return REC.map((_,i)=>cols.map(col=>col[i]));
 }// ── 주간 표: 다른 주(과거·미래)로 이동 ──
@@ -385,25 +451,102 @@ function weekNav(t){
 const r1=v=>Math.round(v*10)/10,r2=v=>Math.round(v*100)/100;
 function weekModel(t){ // 주간 표와 같은 계산 (휴일수 보정, 멍 시간 보정)
  const HS=holSet(t),H=HS.size,W=weekCounts(t),sumRow=r=>r.reduce((a,b)=>a+b,0);
- const meongH=sumRow(W[W.length-1])/4,adj=(6-(H-2)*0.5)/6,goal=c=>c[1]*(adj-meongH/TOTAL);
- const dayTot=[...Array(7)].map((_,d)=>W.reduce((a,r)=>a+r[d],0));
- const rows=REC.map((c,i)=>{const tot=sumRow(W[i]),h=tot/4,g=c===MEONG?null:goal(c);return {name:c[0],cells:W[i],tot,h,g,p:g?h/g:null}});
+ const wg=weekGoalInfo(t),meongH=wg.meongH,goal=c=>wg.goal(c[0]);
+ const dayTot=[...Array(7)].map((_,d)=>W.slice(0,-1).reduce((a,r)=>a+r[d],0)); // 합계·달성도는 멍 제외 (엑셀과 동일)
+ const rows=REC.map((c,i)=>{const tot=sumRow(W[i]),h=tot/4,g=c===MEONG?null:goal(c);return {name:labelIn(i,t.dates[0].getTime(),t.dates[6].getTime()),cells:W[i],tot,h,g,p:g?h/g:null}});
  const totH=sumRow(dayTot)/4,Gsum=CATS.reduce((a,c)=>a+goal(c),0);
  return {t,H,rows,dayTot,tot:sumRow(dayTot),totH,Gsum,TP:totH/Gsum};
 }
-function weekSheet(m){
- const t=m.t,D=t.dates,aoa=[];
- aoa.push([t.year,...D.map(d=>d.getUTCMonth()+1),"","","휴일수",m.H]);
- aoa.push(["",...D.map(d=>d.getUTCDate()),"total","","목표","달성도"]);
- aoa.push(["목표 Activity",...t.names,"칸","h","h","%"]);
- m.rows.forEach(r=>aoa.push([r.name,...r.cells.map(n=>n||""),r.tot,r2(r.h),r.g==null?"":r1(r.g),r.p==null?"":r.p]));
- aoa.push(["합계",...m.dayTot,m.tot,r2(m.totH),r1(m.Gsum),m.TP]);
- const ws=XLSX.utils.aoa_to_sheet(aoa);
- for(let r=3;r<aoa.length;r++){const c=ws[XLSX.utils.encode_cell({r,c:11})];if(c&&typeof c.v==="number")c.z="0%"}
- ws["!cols"]=[{wch:26},...Array(7).fill({wch:5}),{wch:7},{wch:7},{wch:7},{wch:8}];
- return ws;
+// ── 주별 시트: 엑셀 원본 양식 (왼쪽 15분 시간 그리드 + 오른쪽 요약표) ──
+// 하루치 칸 배치(slot→{c,a}). 오늘은 앱의 실제 기록, 지난 날짜는 칸 수를 06:30부터 이어 붙인 예시, 이후는 비어 있음
+function daySlots(u,todayU){
+ const m={};
+ if(u>todayU)return m;
+ if(u===todayU){Object.keys(grid).forEach(k=>{m[k]={c:grid[k],a:act[k]||""}});return m}
+ const counts=dayCounts(u,todayU),dn=Math.floor(u/DAY);let i=ALL.indexOf(630);
+ REC.forEach((c,ci)=>{const subs=SUBS[c[0]]||[];for(let n=0;n<counts[ci]&&i<ALL.length;n++,i++)m[ALL[i]]={c:c[0],a:!HAS_REAL&&subs.length?subs[(dn+ci)%subs.length]:""}});
+ return m;
 }
-function buildWorkbook(a,b,withSheets){
+const hx=c=>c.replace("#","").toUpperCase();
+const isLight=h=>{const n=parseInt(h,16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>150};
+const THIN={style:"thin",color:{rgb:"BFBFBF"}},BOX={top:THIN,bottom:THIN,left:THIN,right:THIN};
+const sty=(o={})=>({font:{name:"맑은 고딕",sz:o.sz||10,bold:!!o.b,color:{rgb:o.fc||"000000"}},...(o.fill?{fill:{patternType:"solid",fgColor:{rgb:o.fill}}}:{}),alignment:{horizontal:o.h||"center",vertical:"center",wrapText:!!o.wrap},...(o.nb?{}:{border:BOX}),...(o.fmt?{numFmt:o.fmt}:{})});
+function weekSheet(m){
+ const t=m.t,D=t.dates,ws={},merges=[],HS=holSet(t),BLUE="00B0F0",C0=9; // C0: 요약표 시작 열(J)
+ let maxR=0,maxC=0;
+ const put=(r,c,v,s)=>{const cell=typeof v==="number"?{v,t:"n"}:{v:v==null?"":String(v),t:"s"};if(s)cell.s=s;ws[XLSX.utils.encode_cell({r,c})]=cell;if(r>maxR)maxR=r;if(c>maxC)maxC=c};
+ const rate=p=>p==null?"000000":p>=.9?"2F9E6B":p>=.6?"E8890C":"D6455D";
+ // 위쪽 머리글: 연도 / 날짜(MMDD, 휴일은 파랑) / 요일
+ put(0,0,t.year,sty({b:1,sz:14,fc:"0000FF",fill:"DDEBF7"}));put(1,0,"",sty({nb:1}));put(2,0,"",sty({nb:1}));
+ D.forEach((d,i)=>{
+  put(0,1+i,(d.getUTCMonth()+1)*100+d.getUTCDate(),sty({b:1,fill:HS.has(i)?BLUE:undefined}));
+  put(1,1+i,t.names[i],sty({sz:9,fc:"595959",fill:HS.has(i)?BLUE:undefined}));
+  put(2,1+i,"",sty({nb:1}));
+ });
+ // 시간 그리드: 연속된 같은 활동은 세로로 병합, 카테고리 색으로 채움
+ const slots=D.map(d=>daySlots(d.getTime(),t.todayU)),R0=3;
+ ALL.forEach((k,i)=>put(R0+i,0,k,sty({sz:9,fc:"7F7F7F"})));
+ D.forEach((d,di)=>{
+  let i=0;
+  while(i<ALL.length){
+   const cur=slots[di][ALL[i]];
+   if(!cur){put(R0+i,1+di,"",sty());i++;continue}
+   const same=k=>{const x=slots[di][k];return x&&x.c===cur.c&&x.a===cur.a};
+   let j=i;while(j+1<ALL.length&&same(ALL[j+1]))j++;
+   const fh=hx(color(cur.c)),fc=isLight(fh)?"2B1D12":"FFFFFF";
+   for(let r=i;r<=j;r++)put(R0+r,1+di,r===i?(cur.a||cur.c):"",sty({fill:fh,fc,sz:9,wrap:1}));
+   if(j>i)merges.push({s:{r:R0+i,c:1+di},e:{r:R0+j,c:1+di}});
+   i=j+1;
+  }
+ });
+ put(R0+ALL.length+1,0,HAS_REAL?"※ 칸 수 합계는 엑셀의 실제 기록이에요. 시간대 배치는 칸 수를 06:30부터 이어 붙인 것이고, 오늘은 앱에 입력한 기록이에요":"※ 오늘 이전 날짜의 시간대와 활동은 예시이고, 오늘은 앱에 입력한 기록이에요",sty({sz:9,fc:"7F7F7F",nb:1,h:"left"}));
+ // 오른쪽 요약표
+ put(0,C0,t.year,sty({b:1,sz:14,fc:"0000FF",fill:"DDEBF7"}));
+ D.forEach((d,i)=>{
+  put(0,C0+1+i,d.getUTCMonth()+1,sty({sz:9,fc:"7F7F7F"}));
+  put(1,C0+1+i,d.getUTCDate(),sty({b:1,fill:HS.has(i)?BLUE:undefined}));
+  put(2,C0+1+i,t.names[i],sty({sz:9,fc:"595959"}));
+ });
+ put(0,C0+8,"",sty({nb:1}));put(0,C0+9,"",sty({nb:1}));
+ put(0,C0+10,"휴일수",sty({sz:9,fc:"595959",nb:1,h:"right"}));put(0,C0+11,m.H,sty({b:1,fc:"0000FF"}));
+ put(1,C0+8,"total",sty({b:1,fill:"DDEBF7"}));put(1,C0+9,"",sty({fill:"DDEBF7"}));merges.push({s:{r:1,c:C0+8},e:{r:1,c:C0+9}});
+ put(1,C0+10,"목표",sty({b:1,fill:"DDEBF7"}));put(1,C0+11,"달성도",sty({b:1,fill:"DDEBF7"}));
+ put(1,C0,"",sty({nb:1}));
+ put(2,C0,"목표 Activity",sty({sz:9,fc:"595959",h:"left",nb:1}));
+ ["칸","h","h","%"].forEach((u,i)=>put(2,C0+8+i,u,sty({sz:9,fc:"7F7F7F",nb:1})));
+ m.rows.forEach((r,i)=>{
+  const rr=3+i,fh=hx(REC[i][2]),fc=isLight(fh)?"2B1D12":"FFFFFF";
+  put(rr,C0,r.name,sty({fill:fh,fc,b:1,h:"left"}));
+  r.cells.forEach((n,d)=>put(rr,C0+1+d,n||"",sty({fill:d===t.idx?"EAF0FF":undefined})));
+  put(rr,C0+8,r.tot,sty({b:1}));put(rr,C0+9,r2(r.h),sty());put(rr,C0+10,r.g==null?"":r1(r.g),sty());
+  put(rr,C0+11,r.p==null?"":r.p,sty({b:1,fmt:"0%",fc:rate(r.p)}));
+ });
+ const tr=3+m.rows.length,G="F2F2F2";
+ put(tr,C0,"합계",sty({b:1,h:"left",fill:G}));
+ m.dayTot.forEach((n,d)=>put(tr,C0+1+d,n,sty({b:1,fill:G})));
+ put(tr,C0+8,m.tot,sty({b:1,fill:G}));put(tr,C0+9,r2(m.totH),sty({b:1,fill:G}));put(tr,C0+10,r1(m.Gsum),sty({b:1,fill:G}));
+ put(tr,C0+11,m.TP,sty({b:1,fmt:"0%",fc:"0000FF",fill:G}));
+ // 기상시간 ★ (오늘만 앱에 기록이 있음)
+ const wr=tr+2;
+ put(wr,C0,"기상시간 ★",sty({sz:9,fc:"595959",h:"left",nb:1}));
+ D.forEach((d,i)=>put(wr,C0+1+i,HAS_REAL?(REAL_MARK[toS(d.getTime())]||""):(i===t.idx?"★":""),sty({fc:"0000FF",nb:1})));
+ // Insight (일기·메모 칸)
+ const ir=wr+2;
+ for(let c=0;c<12;c++)put(ir,C0+c,c===0?"Insight":"",sty({b:1,fc:"FFFFFF",fill:"FF0000",h:"left",nb:1}));
+ merges.push({s:{r:ir,c:C0},e:{r:ir,c:C0+11}});
+ for(let k=1;k<=8;k++){
+  for(let c=0;c<12;c++)put(ir+k,C0+c,"",sty({h:"left"}));
+  merges.push({s:{r:ir+k,c:C0},e:{r:ir+k,c:C0+11}});
+ }
+ // 오른쪽 위: 살아온 날 / 살아갈 날
+ put(0,22,t.live,sty({b:1,sz:12,nb:1,h:"right",fmt:"#,##0"}));put(0,23,"살아온 날",sty({nb:1,h:"left"}));
+ put(1,22,t.left,sty({b:1,sz:12,nb:1,h:"right",fmt:"#,##0"}));put(1,23,"살아갈 날",sty({nb:1,h:"left"}));
+ ws["!cols"]=[{wch:6},...Array(7).fill({wch:12}),{wch:2},{wch:24},...Array(7).fill({wch:5}),{wch:6},{wch:7},{wch:7},{wch:8},{wch:2},{wch:9},{wch:11}];
+ ws["!rows"]=[{hpt:24}];
+ ws["!merges"]=merges;
+ ws["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:maxR,c:maxC}});
+ return ws;
+}function buildWorkbook(a,b,withSheets){
  const wb=XLSX.utils.book_new(),ms=[];
  for(let k=a;k<=b;k++)ms.push(weekModel(weekInfo(k)));
  const head=["주차","시작","끝",...REC.map(c=>c[0]+"(h)"),"합계(h)","목표(h)","달성도"];
@@ -411,16 +554,18 @@ function buildWorkbook(a,b,withSheets){
  const sum=XLSX.utils.aoa_to_sheet(aoa);
  for(let r=1;r<aoa.length;r++){const c=sum[XLSX.utils.encode_cell({r,c:head.length-1})];if(c&&typeof c.v==="number")c.z="0%"}
  sum["!cols"]=[{wch:8},{wch:11},{wch:11},...REC.map(()=>({wch:12})),{wch:10},{wch:10},{wch:8}];
+ head.forEach((_,c)=>{const cell=sum[XLSX.utils.encode_cell({r:0,c})];if(cell)cell.s=sty({b:1,fill:"D9D9D9",wrap:1})});
+ sum["!rows"]=[{hpt:32}];
  XLSX.utils.book_append_sheet(wb,sum,"요약");
  if(withSheets)ms.forEach(m=>XLSX.utils.book_append_sheet(wb,weekSheet(m),toS(m.t.dates[0].getTime()).slice(2).replace(/-/g,""))); // 시트 이름: 시작일 YYMMDD (엑셀과 같은 방식)
  return wb;
 }
 let xlsxP=null;
-function loadXlsx(){ // 내보낼 때만 불러옴
+function loadXlsx(){ // 내보낼 때만 불러옴. 색·병합 서식을 지원하는 xlsx-js-style 우선, 안 되면 기본 SheetJS(서식 없음)
  if(window.XLSX)return Promise.resolve();
- return xlsxP||(xlsxP=new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>{xlsxP=null;no(new Error("load"))};document.head.appendChild(s)}));
-}
-function openExport(){
+ const load=src=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>{s.remove();no(new Error("load"))};document.head.appendChild(s)});
+ return xlsxP||(xlsxP=load("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js").catch(()=>load("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js")).catch(e=>{xlsxP=null;throw e}));
+}function openExport(){
  const t=todayInfo(),v=viewInfo(),cur=Math.min(t.wk,t.weeks-1);
  $("#sheetBody").innerHTML=`<h2 style="font-size:16px;margin-bottom:4px">엑셀로 내보내기</h2><div class="sub" style="margin-bottom:12px">주별로 정리해서 .xlsx 파일로 저장해요</div>
  <label class="opt"><input type="radio" name="xr" value="one" ${v.viewing?"checked":""}><span>지금 보는 주만 <small>제${v.wk+1}주 · ${v.week}</small></span></label>
@@ -452,13 +597,13 @@ function renderDetail(){
  const W=weekCounts(t),sumRow=r=>r.reduce((a,b)=>a+b,0);
  const meongH=sumRow(W[W.length-1])/4;
  // 엑셀의 목표 보정: 주 목표 × (6−(휴일수−2)×0.5)/6 − 주 목표 × 멍 시간/주 목표 합계
- const adj=(6-(H-2)*0.5)/6,goal=c=>c[1]*(adj-meongH/TOTAL);
+ const wg=weekGoalInfo(t),goal=c=>wg.goal(c[0]);
  const n2=v=>String(Math.round(v*100)/100);
- const dayTot=[...Array(7)].map((_,d)=>W.reduce((a,r)=>a+r[d],0));
+ const dayTot=[...Array(7)].map((_,d)=>W.slice(0,-1).reduce((a,r)=>a+r[d],0)); // 합계·달성도는 멍 제외 (엑셀과 동일)
  const row=(c,i)=>{
   const tot=sumRow(W[i]),h=tot/4,g=c===MEONG?null:goal(c),p=g?Math.round(h/g*100):null;
   const dark=i>=11; // 살색·멍 행은 어두운 글자
-  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th>${W[i].map((n,d)=>`<td class="${d===TD?"tdy":""}">${n||""}</td>`).join("")}<td class="sum">${tot}</td><td>${n2(h)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td></tr>`;
+  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${labelIn(i,t.dates[0].getTime(),t.dates[6].getTime())}</th>${W[i].map((n,d)=>`<td class="${d===TD?"tdy":""}">${n||""}</td>`).join("")}<td class="sum">${tot}</td><td>${n2(h)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td></tr>`;
  };
  const totH=sumRow(dayTot)/4,Gsum=CATS.reduce((a,c)=>a+goal(c),0),TP=Math.round(totH/Gsum*100);
  return detailSeg()+weekNav(t)+`<div class="tbl-wrap"><table class="wk"><thead>
@@ -467,7 +612,8 @@ function renderDetail(){
   <tr><th class="cat sm">목표 Activity</th>${t.names.map(d=>`<th class="dt">${d}</th>`).join("")}<th class="dt">칸</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th></tr>
  </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
  <tfoot><tr><th class="cat"></th>${dayTot.map((n,d)=>`<td class="${d===TD?"tdy":""}">${n}</td>`).join("")}<td class="sum">${sumRow(dayTot)}</td><td>${n2(totH)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td></tr></tfoot></table></div>
- <div class="sub" style="margin-top:8px">파란 날짜는 휴일이에요(날짜를 탭하면 바뀜). ${TD>=0&&TD<=6?`지난 요일은 예시 데이터이고, 오늘(${WD[new Date().getDay()]}요일)은 오늘 탭의 기록이 바로 반영돼요.`:t.wk<todayInfo().wk?"지난 주는 예시 데이터예요.":"아직 오지 않은 주라 기록이 없어요."}</div>`;
+ <div class="sub" style="margin-top:8px">이 주 목표 <b>${n2(wg.total)}h</b> = ${TOTAL}h${wg.adjH<1?` × ${wg.adjH.toFixed(3)}(휴일 ${wg.H}일, 추가 휴일은 50%)`:""} − 멍 ${n2(wg.meongH)}h. 카테고리별 목표도 같은 비율로 줄여요.</div>
+ <div class="sub" style="margin-top:6px">파란 날짜는 휴일이에요(날짜를 탭하면 바뀜). 합계와 달성도는 엑셀처럼 멍을 뺀 값이에요. ${TD>=0&&TD<=6?`${HAS_REAL?"지난 날짜는 엑셀에서 가져온 실제 기록이에요.":"지난 요일은 예시 데이터이고,"} 오늘(${WD[new Date().getDay()]}요일)은 오늘 탭의 기록이 바로 반영돼요.`:t.wk<todayInfo().wk?(HAS_REAL?"엑셀에서 가져온 실제 기록이에요.":"지난 주는 예시 데이터예요."):"아직 오지 않은 주라 기록이 없어요."}</div>`;
 }
 // ── 세부data: 기간 집계 ──
 let dmode="week",pre="wk",rf="",rt="";
@@ -511,12 +657,13 @@ function renderRange(t){
  for(let u=fU;u<=tU;u+=DAY)dayCounts(u,t.todayU).forEach((n,i)=>tot[i]+=n);
  const meongH=tot[tot.length-1]/4;
  // 주간 표와 같은 보정: 주 목표 × 주 수 − 주 목표 × 멍 시간/주 목표 합계 (휴일 보정은 주 단위라 생략)
- const goal=c=>c[1]*(weeks-meongH/TOTAL);
- const n2=v=>String(Math.round(v*100)/100),totH=tot.reduce((a,b)=>a+b,0)/4;
+ const tg=targetOver(fU,tU);
+ const goal=c=>tg.by[CATS.indexOf(c)];
+ const n2=v=>String(Math.round(v*100)/100),totH=tot.slice(0,-1).reduce((a,b)=>a+b,0)/4; // 합계는 멍 제외
  const Gsum=CATS.reduce((a,c)=>a+goal(c),0),TP=Math.round(totH/Gsum*100);
  const row=(c,i)=>{
   const h=tot[i]/4,g=c===MEONG?null:goal(c),p=g?Math.round(h/g*100):null,dark=i>=11;
-  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${c[0]}</th><td class="sum">${n2(h)}</td><td>${n2(h/weeks)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td><td>${totH?Math.round(h/totH*100):0}%</td></tr>`;
+  return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${labelIn(i,fU,tU)}</th><td class="sum">${n2(h)}</td><td>${n2(h/weeks)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td><td>${totH?Math.round(h/totH*100):0}%</td></tr>`;
  };
  // 이번 분기: 해당연도를 주 단위로 4등분(13주씩, 남는 주는 4분기)해 끝난 주만 비교 / 연 누적: 해당연도 전체 일수 기준
  let prog="";
@@ -541,24 +688,39 @@ function renderRange(t){
   const cur=inCur(q.rawWk,q.qa,q.qb)+`<div class="sub" style="margin-top:6px">달력 분기 기준이고, 한 주의 4일 이상이 속한 분기로 그 주를 계산해요.</div>`;
   if(!done)prog=`<div class="card"><h2>진행 현황 <span class="sub">${wkSub}</span></h2><div class="sub">끝난 주가 아직 없어서 비교할 수 없어요. 첫 주가 끝나면 계산돼요.</div>${cur}</div>`;
   else{
-   const actual=catH(q.qStartU,q.qStartU+done*7*DAY-1),goalFull=TOTAL*q.qW;
-   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/q.qW,actual,goalFull,paceH:TOTAL*done,proj:actual/done*q.qW,dName:"주 진행률",dText:`${done}주 / ${q.qW}주 완료 (끝난 주 기준)`,extra:cur});
+   const actual=catH(q.qStartU,q.qStartU+done*7*DAY-1),goalFull=Array.from({length:q.qW},(_,i)=>weekTotalGoal(q.qa+i)).reduce((a,b)=>a+b,0),paceH=Array.from({length:done},(_,i)=>weekTotalGoal(q.qa+i)).reduce((a,b)=>a+b,0);
+   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/q.qW,actual,goalFull,paceH,proj:actual/done*q.qW,dName:"주 진행률",dText:`${done}주 / ${q.qW}주 완료 (끝난 주 기준)`,extra:cur});
   }
  }else if(pre==="yr"){
   const W=t.weeks,rawWk=Math.floor((t.todayU-s0)/(7*DAY)),done=Math.min(W,Math.max(0,rawWk));
   const wkSub=`해당연도 ${fmtD(s0)} – ${fmtD(toU(cfg.end))} (${W}주)`,cur=inCur(rawWk,0,W-1);
   if(!done)prog=`<div class="card"><h2>진행 현황 <span class="sub">${wkSub}</span></h2><div class="sub">끝난 주가 아직 없어서 비교할 수 없어요. 첫 주가 끝나면 계산돼요.</div>${cur}</div>`;
   else{
-   const actual=catH(s0,s0+done*7*DAY-1),goalFull=TOTAL*W;
-   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/W,actual,goalFull,paceH:TOTAL*done,proj:actual/done*W,dName:"주 진행률",dText:`${done}주 / ${W}주 완료 (끝난 주 기준)`,extra:cur});
+   const actual=catH(s0,s0+done*7*DAY-1),goalFull=Array.from({length:W},(_,i)=>weekTotalGoal(i)).reduce((a,b)=>a+b,0),paceH=Array.from({length:done},(_,i)=>weekTotalGoal(i)).reduce((a,b)=>a+b,0);
+   prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/W,actual,goalFull,paceH,proj:actual/done*W,dName:"주 진행률",dText:`${done}주 / ${W}주 완료 (끝난 주 기준)`,extra:cur});
   }
- } return detailSeg()+chips+custom+`<div class="card" style="padding:10px 14px"><b>${fmtD(fU)} – ${fmtD(tU)}</b> <span class="sub">· ${nd}일 (${n2(weeks)}주) · 합계 ${n2(totH)}h</span>${tU>t.todayU?`<div class="sub" style="margin-top:4px">오늘 이후 날짜는 기록이 없어 0으로 계산돼요.</div>`:""}</div>${prog}
+ } // 이름이 바뀐 카테고리는 이름이 같은 구간끼리 따로 집계해서 보여줌 (위치는 같고 이름만 다름)
+ const chg=[];
+ CATS.forEach((c,i)=>{
+  if(namesIn(i,fU,tU).length<2)return;
+  const segs=[];
+  GOALSETS.forEach((s,n)=>{
+   const a=Math.max(fU,toU(s.from)),e=Math.min(tU,n+1<GOALSETS.length?toU(GOALSETS[n+1].from)-DAY:tU);
+   if(e<a)return;
+   let h=0;for(let u=a;u<=e;u+=DAY)h+=dayCounts(u,t.todayU)[i]/4;
+   const last=segs[segs.length-1];
+   if(last&&last.name===s.names[i]){last.to=e;last.h+=h}else segs.push({name:s.names[i],from:a,to:e,h});
+  });
+  chg.push({c,i,segs});
+ });
+ const chgCard=chg.length?`<div class="card"><h2>이름이 바뀐 카테고리 <span class="sub">구간별 집계</span></h2>${chg.map(x=>`<div class="sumrow"><div class="t"><span style="color:${x.c[2]}">●</span> <b>${x.i+1}번째 카테고리</b></div>${x.segs.map(s=>`<div class="t sm"><span>${s.name} <span class="sub">${fmtD(s.from)} – ${fmtD(s.to)}</span></span><span class="sub">${n2(s.h)}h</span></div>`).join("")}</div>`).join("")}</div>`:""; return detailSeg()+chips+custom+`<div class="card" style="padding:10px 14px"><b>${fmtD(fU)} – ${fmtD(tU)}</b> <span class="sub">· ${nd}일 (${n2(weeks)}주) · 합계 ${n2(totH)}h</span>${tU>t.todayU?`<div class="sub" style="margin-top:4px">오늘 이후 날짜는 기록이 없어 0으로 계산돼요.</div>`:""}</div>${prog}
  <div class="tbl-wrap"><table class="wk"><thead>
   <tr><th class="cat sm">목표 Activity</th><th class="tot">합계</th><th class="tot">주평균</th><th class="tot">목표</th><th class="tot">달성도</th><th class="tot">비중</th></tr>
   <tr><th class="cat"></th><th class="dt">h</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th><th class="dt">%</th></tr>
  </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
  <tfoot><tr><th class="cat"></th><td class="sum">${n2(totH)}</td><td>${n2(totH/weeks)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td><td>100%</td></tr></tfoot></table></div>
- <div class="sub" style="margin-top:8px">지난 날짜는 예시 데이터이고, 오늘은 오늘 탭의 기록이 반영돼요. 목표는 주 목표 × 주 수에서 멍 시간 비율을 뺀 값이에요.</div>`;
+ ${chgCard}
+ <div class="sub" style="margin-top:8px">${HAS_REAL?"지난 날짜는 엑셀에서 가져온 실제 기록이고":"지난 날짜는 예시 데이터이고"}, 오늘은 오늘 탭의 기록이 반영돼요. 목표는 주마다 휴일(주말 포함 3일 이상이면 추가 휴일은 50%)과 멍 시간을 반영한 값이에요.</div>`;
 }
 const g2={};CATS.forEach(c=>g2[c[0]]=c[1]);
 function renderGoals(){
@@ -577,7 +739,7 @@ function renderMore(){
  <div class="li"><div class="ic">👟</div><div>Health Connect (구글 피트니스)<small>오늘 8,240보 · 10분 전 동기화</small></div><span class="tag ok">연결됨</span></div>
  <div class="li"><div class="ic">🥗</div><div>뱅크샐러드<small>내보내기 파일(xlsx/CSV) 가져오기</small></div><span class="tag">파일 선택</span></div></div>
  <div class="card"><h2>엑셀</h2>
- <div class="li"><div class="ic">📥</div><div>엑셀 가져오기<small>2026 time cruise.xlsx · 목표 + 주간 29장</small></div></div>
+ <div class="li"><div class="ic">📥</div><div>엑셀 가져오기<small>${HAS_REAL?`2026 time cruise (1).xlsx에서 가져옴 · ${Object.keys(TC_DATA.days).length}일 (${Object.keys(TC_DATA.days)[0]} ~ ${Object.keys(TC_DATA.days).slice(-1)[0]})`:"2026 time cruise.xlsx · 목표 + 주간 29장"}</small></div></div>
  <div class="li"><div class="ic">📤</div><div>엑셀 내보내기<small>기존 레이아웃 그대로 .xlsx</small></div></div></div>
  <div class="card"><h2>이번 달 지출 (뱅크샐러드)</h2>${[["식비",412000,60],["교통",98000,14],["여가/문화",156000,23],["투자/저축",900000,100]].map(r=>`<div class="row"><div class="t"><span>${r[0]}</span><b>${r[1].toLocaleString()}원</b></div><div class="bar"><i style="width:${r[2]}%;background:var(--brand)"></i></div></div>`).join("")}<div class="sub">샘플 데이터</div></div>`;
 }
