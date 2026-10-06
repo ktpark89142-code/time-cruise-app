@@ -101,7 +101,9 @@ table.wk tfoot td{border-top:2px solid var(--line)}.prow{display:flex;justify-co
 .pbar .tick{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ink);border-radius:1px}
 .gap{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:10px 12px}
 .gap b{font-size:22px;flex:none}
-.gap span{font-size:12px;line-height:1.5}.wknav{display:flex;gap:6px;align-items:center;margin:0 0 10px}
+.gap span{font-size:12px;line-height:1.5}.wakeline{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.wakebtn{border:0;background:var(--bg);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:13px;cursor:pointer}
+table.wk tr.wkr td,table.wk tr.wkr th{border-top:0;font-weight:400}.wknav{display:flex;gap:6px;align-items:center;margin:0 0 10px}
 .wknav button{flex:none;border:0;background:var(--card);color:var(--ink);border-radius:10px;height:38px;min-width:38px;padding:0 10px;font-size:13px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .wknav button:disabled{opacity:.35;cursor:default}
 .wknav button.now{background:var(--brand);color:#fff;font-weight:700}
@@ -158,7 +160,8 @@ const TOTAL=CATS.reduce((a,c)=>a+c[1],0);
 // 멍(아무것도 안 하는 시간)은 엑셀에서도 따로 기록하는 항목. 목표 합계(TOTAL)에는 넣지 않고 기록용으로만 추가
 const MEONG=["멍",0,"#f3e2b3",0];
 const REC=[...CATS,MEONG];
-const color=n=>REC.find(c=>c[0]===n)?.[2]||"#999";
+const PSEUDO=[["수면","#0C0C0C"],["기상","#7F7F7F"],["시안","#00FFFF"],["분홍","#FFCCFF"],["기타","#E0E0E0"]]; // 엑셀 그리드의 색 칸 중 카테고리가 아닌 것 (코드 -1~-5)
+const color=n=>REC.find(c=>c[0]===n)?.[2]||PSEUDO.find(p=>p[0]===n)?.[1]||"#999";
 // ── 엑셀에서 가져온 실제 기록(data.js, 개인 데이터라 GitHub에는 없음). 없으면 예시 데이터로 동작 ──
 const HAS_REAL=!!(window.TC_DATA&&TC_DATA.days);
 const REAL_DAY={},REAL_MARK=(HAS_REAL&&TC_DATA.marks)||{};
@@ -184,6 +187,28 @@ function namesIn(i,a,b){
  return out;
 }
 const labelIn=(i,a,b)=>namesIn(i,a,b).join(" → ");
+// ── 시간대별 기록(엑셀 그리드): 4:30부터 15분 칸 단위. 지난 날짜는 읽기 전용으로 보여줌 ──
+const SLOT_CACHE={};
+function realSlots(ds){
+ if(SLOT_CACHE[ds])return SLOT_CACHE[ds];
+ const raw=HAS_REAL&&TC_DATA.slots&&TC_DATA.slots[ds];if(!raw)return null;
+ const m={};
+ raw.forEach(([s,u,c,tx])=>{const name=c>=0?REC[c][0]:PSEUDO[-c-1][0];for(let n=0;n<u;n++){const mm=s+15*n,k=Math.floor(mm/60)*100+mm%60;if(k>=430&&k<2400)m[k]={c:name,a:tx||""}}});
+ return SLOT_CACHE[ds]=m;
+}
+// ── 기상시간: 집계 카테고리가 아니라 날짜별로 따로 기록 (엑셀의 '기상' 칸 시각 + 앱에서 입력한 값). 앱 입력이 우선 ──
+let WAKE_USER={};
+try{WAKE_USER=JSON.parse(localStorage.getItem("tc-wake")||"{}")||{}}catch(e){}
+const saveWakeStore=()=>{try{localStorage.setItem("tc-wake",JSON.stringify(WAKE_USER))}catch(e){}};
+const wakeMin=ds=>{ // 분(자정부터). 없으면 null
+ const u=WAKE_USER[ds];
+ if(u)return u.t?(+u.t.split(":")[0])*60+(+u.t.split(":")[1]):null;
+ const w=HAS_REAL&&TC_DATA.wake&&TC_DATA.wake[ds];return w==null?null:w;
+};
+const wakeMark=ds=>(WAKE_USER[ds]&&WAKE_USER[ds].m!=null?WAKE_USER[ds].m:REAL_MARK[ds])||"";
+const fmtMin=m=>{if(m==null)return "";m=Math.round(m);return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+const fmtHm=m=>{if(m==null)return "";m=Math.round(m);return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")};
+const wakeAvg=list=>{const v=list.filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
 const grid={}; // slot -> cat
 if(!HAS_REAL)[[630,"몰입 / 명상"],[700,"Soul, 건강/운동 공부"],[730,"Soul, 건강/운동 공부"],[800,"산책 & 반트"],[830,"산책 & 반트"],[900,"AiE"],[930,"AiE"],[1000,"AiE"],[1030,"Biz"],[1100,"Biz"],[1300,"Investment"],[1330,"Smart/유튜버/writing/독서"],[1400,"coaching/강의/Edge&"]].forEach(([k,v])=>grid[k]=v);
 // 카테고리 아래 세부 activity (엑셀 주간 시트의 입력 표기에서 가져온 예시). 직접 입력하면 목록에 추가됨
@@ -242,23 +267,27 @@ Object.keys(grid).forEach(k=>{grid[+k+15]=grid[k]}); // 기존 30분 블록 → 
 function slots(){const a=[];for(let h=4;h<24;h++)for(const m of [0,15,30,45]){const k=h*100+m;if(k>=430)a.push(k)}return a}
 const fmt=k=>String(Math.floor(k/100)).padStart(2,"0")+":"+String(k%100).padStart(2,"0");
 
+// 지난 날·앞으로 올 날은 엑셀에서 가져온 기록을 보여주기만 하고(읽기 전용), 입력은 오늘 날짜에서 함
+const roView=()=>HAS_REAL&&day!==todayInfo().idx;
 function renderToday(){
- const used=Object.keys(grid).length*0.25;
- const t=todayInfo();
+ const t=todayInfo(),ro=roView(),vd=t.dates[day],vds=toS(vd.getTime());
  $("#sbt").textContent=`${t.full} · 살아온 날 ${t.live.toLocaleString()}일 · 살아갈 날 ${t.left.toLocaleString()}일`;
+ const src=ro?daySlots(vd.getTime(),t.todayU):Object.fromEntries(Object.keys(grid).map(k=>[k,{c:grid[k],a:act[k]||""}]));
+ const used=ro?dayCounts(vd.getTime(),t.todayU).slice(0,CATS.length).reduce((a,b)=>a+b,0)/4:Object.keys(grid).length*0.25;
+ const wm=wakeMin(vds),wmk=wakeMark(vds),wAvg=wakeAvg(t.dates.map(d=>wakeMin(toS(d.getTime()))));
+ const dayLabel=ro?`${t.names[day]} ${vd.getUTCDate()}일`:"오늘";
  return `<div class="days">${t.names.map((d,i)=>`<button class="${i===day?"on":""}" onclick="day=${i};render()"><span>${d}</span>${t.dates[i].getUTCDate()}</button>`).join("")}</div>
- <div class="brushbar"><div class="chips nowrap"><button class="chip blank ${brush===BLANK?"on":""}" onclick="setBrush('${BLANK}')">블랭크</button>${REC.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
+ ${ro?`<div class="brushbar"><div class="sub">${dayLabel}은 엑셀에서 가져온 기록이라 여기서는 보기만 할 수 있어요. 입력은 오늘 날짜에서 해요.</div></div>`:`<div class="brushbar"><div class="chips nowrap"><button class="chip blank ${brush===BLANK?"on":""}" onclick="setBrush('${BLANK}')">블랭크</button>${REC.map(c=>`<button class="chip ${brush===c[0]?"on":""}" style="background:${c[2]}" onclick="setBrush('${c[0]}')">${c[0]}</button>`).join("")}</div>
  ${brush&&brush!==BLANK?`<div class="chips nowrap sub-row">${(SUBS[brush]||[]).map(a=>`<button class="achip ${brushAct===a?"on":""}" style="--ac:${color(brush)}" onclick="setBrushAct('${a.replace(/'/g,"\\'")}')">${a}</button>`).join("")}
   <span class="addact"><input id="brushIn" placeholder="+ 세부 입력" onkeydown="if(event.key==='Enter')addBrushAct()"><button onclick="addBrushAct()">추가</button></span></div>`:""}
- <div class="sub" style="margin-top:6px">${brush===BLANK?`<b>● 블랭크</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 한 번에 비워져요 (다시 누르면 해제)`:brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>
- <div class="card"><h2>오늘 기록<span class="sub">${used}h / 목표 ${(TOTAL/7).toFixed(1)}h</span></h2>
+ <div class="sub" style="margin-top:6px">${brush===BLANK?`<b>● 블랭크</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 한 번에 비워져요 (다시 누르면 해제)`:brush?`<b style="color:${color(brush)}">● ${brush}${brushAct?` › ${brushAct}`:""}</b> 선택됨 — 칸을 길게 눌러 아래로 끌면 바로 입력 (카테고리를 다시 누르면 해제)`:"카테고리를 고르면 끌어서 바로 입력할 수 있어요"}</div></div>`}
+ <div class="card"><h2>${dayLabel} 기록<span class="sub">${used}h / 목표 ${(TOTAL/7).toFixed(1)}h</span></h2>
  <div class="bar"><i style="width:${Math.min(100,used/(TOTAL/7)*100)}%;background:var(--brand)"></i></div>
- <div class="sub" style="margin-top:8px">${HAS_REAL?`기상 ${REAL_MARK[toS(todayInfo().todayU)]||"기록 없음"} · 걸음수는 Health Connect 연동 후 표시`:"기상 06:30 ★ · 걸음수 8,240 (Health Connect)"}</div></div>
- ${actSummary()}
- <div class="card" style="padding:6px 14px">${slots().map(k=>{const c=grid[k],a=act[k];return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}22;border-left:4px solid ${color(c)}`:""}">${c?(a?`<span class="cn">${c}</span><b class="an">${a}</b>`:`<span>${c}</span>`):"탭하여 입력"}</div></div>`}).join("")}</div>
- <button class="fab" title="타이머" onclick="timer()">▶</button>`;
-}
-// ── 브러시: 카테고리를 하나 고른 뒤 아래로 끌어 연속 입력 ──
+ <div class="wakeline"><button class="wakebtn" onclick="openWake()">🌅 기상 <b>${wm==null?"입력":fmtMin(wm)}</b> ${wmk}</button><span class="sub">${wAvg==null?"":`이 주 평균 ${fmtMin(wAvg)}`}${HAS_REAL?"":" · 걸음수 8,240 (Health Connect)"}</span></div></div>
+ ${actSummary(src,dayLabel)}
+ <div class="card" style="padding:6px 14px">${slots().map(k=>{const s=src[k],c=s&&s.c,a=s&&s.a;return `<div class="slot" data-k="${k}"><div class="tm">${fmt(k)}</div><div class="ct ${c?"":"e"}" style="${c?`background:${color(c)}${isLight(hx(color(c)))?"55":"22"};border-left:4px solid ${color(c)}`:""}">${c?(a?`<span class="cn">${c}</span><b class="an">${a}</b>`:`<span>${c}</span>`):ro?"":"탭하여 입력"}</div></div>`}).join("")}</div>
+ ${ro?"":`<button class="fab" title="타이머" onclick="timer()">▶</button>`}`;
+}// ── 브러시: 카테고리를 하나 고른 뒤 아래로 끌어 연속 입력 ──
 const BLANK="__blank__"; // 블랭크(지우기) 브러시
 let brush=null,brushAct=null;
 function setBrush(n){brush=brush===n?null:n;brushAct=null;render()}
@@ -268,16 +297,31 @@ function addBrushAct(){
  if(!SUBS[brush].includes(v))SUBS[brush].push(v);
  brushAct=v;render();
 }
-// 오늘 카테고리 › 세부 activity 별 시간
-function actSummary(){
+// 카테고리 › 세부 activity 별 시간 (보고 있는 날의 슬롯 기준)
+function actSummary(src,label){
  const by={};
- Object.keys(grid).forEach(k=>{const c=grid[k],a=act[k]||"(세부 없음)";(by[c]??={});by[c][a]=(by[c][a]||0)+0.25});
+ Object.keys(src).forEach(k=>{const s=src[k],c=s.c,a=s.a||"(세부 없음)";(by[c]??={});by[c][a]=(by[c][a]||0)+0.25});
  const cats=REC.filter(c=>by[c[0]]);
  if(!cats.length)return "";
- return `<div class="card"><h2>오늘 세부 activity <span class="sub">카테고리 › 활동</span></h2>${cats.map(c=>{
+ return `<div class="card"><h2>${label} 세부 activity <span class="sub">카테고리 › 활동</span></h2>${cats.map(c=>{
   const m=by[c[0]],tot=Object.values(m).reduce((a,b)=>a+b,0);
-  return `<div class="sumrow"><div class="t"><span style="color:${c[2]}">●</span> <b>${c[0]}</b><span class="sub">${tot}h</span></div>${Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([a,h])=>`<div class="t sm"><span>› ${a}</span><span class="sub">${h}h</span></div>`).join("")}</div>`}).join("")}</div>`;
+  return `<div class="sumrow"><div class="t"><span style="color:${c[2]}">●</span> <b>${c[0]}</b><span class="sub">${tot}h</span></div>${Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([a,h])=>`<div class="t sm"><span>› ${a}</span><span class="sub">${h}h</span></div>`).join("")}</div>`}).join("")}</div>`;
+}// ── 기상시간 입력 (오늘 탭의 🌅 버튼) ──
+let wkMarkSel="";
+function openWake(){
+ const t=todayInfo(),vd=t.dates[day],ds=toS(vd.getTime()),cur=wakeMin(ds);wkMarkSel=wakeMark(ds);
+ const q=["04:30","05:00","05:30","06:00","06:30","07:00","07:30"];
+ $("#sheetBody").innerHTML=`<h2 style="font-size:16px;margin-bottom:4px">기상시간</h2><div class="sub" style="margin-bottom:12px">${fmtD(vd.getTime())} (${t.names[day]}) · 시간 집계와 별개로 따로 기록돼요</div>
+ <label class="fld"><span>기상 시각</span><input type="time" id="wkT" step="300" value="${cur==null?"05:00":fmtMin(cur)}"></label>
+ <div class="chips" style="margin-bottom:12px">${q.map(x=>`<button class="achip" style="--ac:var(--brand)" onclick="document.getElementById('wkT').value='${x}'">${x}</button>`).join("")}</div>
+ <div class="sub" style="margin-bottom:6px">하루 표시</div>
+ <div class="chips" id="wkMarks" style="margin-bottom:14px">${["★","◆","▲","X",""].map(m=>`<button class="achip ${wkMarkSel===m?"on":""}" style="--ac:var(--brand)" onclick="setWakeMark('${m}')">${m||"없음"}</button>`).join("")}</div>
+ <button class="btn" onclick="saveWake()">저장</button><button class="btn g" onclick="clearWake()">기상시간 지우기</button>`;
+ $("#sheet").classList.add("show");
 }
+function setWakeMark(m){wkMarkSel=m;document.querySelectorAll("#wkMarks .achip").forEach(b=>b.classList.toggle("on",b.textContent===(m||"없음")))}
+function saveWake(){const ds=toS(todayInfo().dates[day].getTime()),v=$("#wkT").value;if(!v)return;WAKE_USER[ds]={t:v,m:wkMarkSel};saveWakeStore();closeSheet();render();toast(`기상시간을 저장했어요 · ${v}`)}
+function clearWake(){const ds=toS(todayInfo().dates[day].getTime());WAKE_USER[ds]={t:"",m:""};saveWakeStore();closeSheet();render();toast("기상시간을 지웠어요")}
 // ── 길게 눌러 끌어서 여러 칸 입력 ──
 const ALL=slots();let selRange=[];
 const nextEnd=k=>{const i=ALL.indexOf(k)+1;return i<ALL.length?ALL[i]:2400};
@@ -322,6 +366,7 @@ function setSlot(c){selRange.forEach(k=>{delete grid[k];delete act[k]});closeShe
  };
  const reset=()=>{clearTimeout(timer);timer=null;active=false;startK=curK=null;if(raf){cancelAnimationFrame(raf);raf=null}paint()};
  main.addEventListener("pointerdown",e=>{
+  if(roView())return; // 지난 날은 보기만
   const k=kAt(e.clientX,e.clientY);if(k==null)return;
   sx=e.clientX;sy=e.clientY;startK=curK=k;
   lx=e.clientX;ly=e.clientY;
@@ -458,16 +503,21 @@ function weekModel(t){ // 주간 표와 같은 계산 (휴일수 보정, 멍 시
  return {t,H,rows,dayTot,tot:sumRow(dayTot),totH,Gsum,TP:totH/Gsum};
 }
 // ── 주별 시트: 엑셀 원본 양식 (왼쪽 15분 시간 그리드 + 오른쪽 요약표) ──
-// 하루치 칸 배치(slot→{c,a}). 오늘은 앱의 실제 기록, 지난 날짜는 칸 수를 06:30부터 이어 붙인 예시, 이후는 비어 있음
+// 하루치 칸 배치(slot→{c,a}). 지난 날짜는 엑셀의 시간대별 기록(4:30부터), 오늘은 앱에 입력한 기록(없으면 엑셀 기록), 이후는 비어 있음
 function daySlots(u,todayU){
  const m={};
  if(u>todayU)return m;
- if(u===todayU){Object.keys(grid).forEach(k=>{m[k]={c:grid[k],a:act[k]||""}});return m}
- const counts=dayCounts(u,todayU),dn=Math.floor(u/DAY);let i=ALL.indexOf(630);
- REC.forEach((c,ci)=>{const subs=SUBS[c[0]]||[];for(let n=0;n<counts[ci]&&i<ALL.length;n++,i++)m[ALL[i]]={c:c[0],a:!HAS_REAL&&subs.length?subs[(dn+ci)%subs.length]:""}});
+ const live=()=>{Object.keys(grid).forEach(k=>{m[k]={c:grid[k],a:act[k]||""}});return m};
+ if(HAS_REAL){
+  const rs=realSlots(toS(u))||{};
+  if(u===todayU&&Object.keys(grid).length)return live();
+  return rs;
+ }
+ if(u===todayU)return live();
+ const counts=dayCounts(u,todayU),dn=Math.floor(u/DAY);let i=ALL.indexOf(630); // 실제 데이터가 없을 때의 예시 배치
+ REC.forEach((c,ci)=>{const subs=SUBS[c[0]]||[];for(let n=0;n<counts[ci]&&i<ALL.length;n++,i++)m[ALL[i]]={c:c[0],a:subs.length?subs[(dn+ci)%subs.length]:""}});
  return m;
-}
-const hx=c=>c.replace("#","").toUpperCase();
+}const hx=c=>c.replace("#","").toUpperCase();
 const isLight=h=>{const n=parseInt(h,16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>150};
 const THIN={style:"thin",color:{rgb:"BFBFBF"}},BOX={top:THIN,bottom:THIN,left:THIN,right:THIN};
 const sty=(o={})=>({font:{name:"맑은 고딕",sz:o.sz||10,bold:!!o.b,color:{rgb:o.fc||"000000"}},...(o.fill?{fill:{patternType:"solid",fgColor:{rgb:o.fill}}}:{}),alignment:{horizontal:o.h||"center",vertical:"center",wrapText:!!o.wrap},...(o.nb?{}:{border:BOX}),...(o.fmt?{numFmt:o.fmt}:{})});
@@ -526,12 +576,16 @@ function weekSheet(m){
  m.dayTot.forEach((n,d)=>put(tr,C0+1+d,n,sty({b:1,fill:G})));
  put(tr,C0+8,m.tot,sty({b:1,fill:G}));put(tr,C0+9,r2(m.totH),sty({b:1,fill:G}));put(tr,C0+10,r1(m.Gsum),sty({b:1,fill:G}));
  put(tr,C0+11,m.TP,sty({b:1,fmt:"0%",fc:"0000FF",fill:G}));
- // 기상시간 ★ (오늘만 앱에 기록이 있음)
+ // 기상시간(시각, 집계 카테고리 아님)과 평가 표시(★◆▲X)
  const wr=tr+2;
- put(wr,C0,"기상시간 ★",sty({sz:9,fc:"595959",h:"left",nb:1}));
- D.forEach((d,i)=>put(wr,C0+1+i,HAS_REAL?(REAL_MARK[toS(d.getTime())]||""):(i===t.idx?"★":""),sty({fc:"0000FF",nb:1})));
+ put(wr,C0,"기상시간",sty({sz:9,fc:"595959",h:"left",nb:1}));
+ D.forEach((d,i)=>put(wr,C0+1+i,fmtMin(wakeMin(toS(d.getTime()))),sty({sz:8,nb:1})));
+ const wavg=wakeAvg(D.map(d=>wakeMin(toS(d.getTime()))));
+ put(wr,C0+8,wavg==null?"":"평균 "+fmtMin(wavg),sty({sz:9,b:1,nb:1,h:"left"}));
+ put(wr+1,C0,"기상 평가",sty({sz:9,fc:"595959",h:"left",nb:1}));
+ D.forEach((d,i)=>put(wr+1,C0+1+i,wakeMark(toS(d.getTime())),sty({fc:"0000FF",nb:1})));
  // Insight (일기·메모 칸)
- const ir=wr+2;
+ const ir=wr+3;
  for(let c=0;c<12;c++)put(ir,C0+c,c===0?"Insight":"",sty({b:1,fc:"FFFFFF",fill:"FF0000",h:"left",nb:1}));
  merges.push({s:{r:ir,c:C0},e:{r:ir,c:C0+11}});
  for(let k=1;k<=8;k++){
@@ -549,11 +603,11 @@ function weekSheet(m){
 }function buildWorkbook(a,b,withSheets){
  const wb=XLSX.utils.book_new(),ms=[];
  for(let k=a;k<=b;k++)ms.push(weekModel(weekInfo(k)));
- const head=["주차","시작","끝",...REC.map(c=>c[0]+"(h)"),"합계(h)","목표(h)","달성도"];
- const aoa=[head,...ms.map((m,i)=>[`제${a+i+1}주`,toS(m.t.dates[0].getTime()),toS(m.t.dates[6].getTime()),...m.rows.map(r=>r2(r.h)),r2(m.totH),r1(m.Gsum),m.TP])];
+ const head=["주차","시작","끝",...REC.map(c=>c[0]+"(h)"),"합계(h)","목표(h)","달성도","평균 기상"];
+ const aoa=[head,...ms.map((m,i)=>[`제${a+i+1}주`,toS(m.t.dates[0].getTime()),toS(m.t.dates[6].getTime()),...m.rows.map(r=>r2(r.h)),r2(m.totH),r1(m.Gsum),m.TP,fmtMin(wakeAvg(m.t.dates.map(d=>wakeMin(toS(d.getTime())))))])];
  const sum=XLSX.utils.aoa_to_sheet(aoa);
- for(let r=1;r<aoa.length;r++){const c=sum[XLSX.utils.encode_cell({r,c:head.length-1})];if(c&&typeof c.v==="number")c.z="0%"}
- sum["!cols"]=[{wch:8},{wch:11},{wch:11},...REC.map(()=>({wch:12})),{wch:10},{wch:10},{wch:8}];
+ for(let r=1;r<aoa.length;r++){const c=sum[XLSX.utils.encode_cell({r,c:head.length-2})];if(c&&typeof c.v==="number")c.z="0%"}
+ sum["!cols"]=[{wch:8},{wch:11},{wch:11},...REC.map(()=>({wch:12})),{wch:10},{wch:10},{wch:8},{wch:9}];
  head.forEach((_,c)=>{const cell=sum[XLSX.utils.encode_cell({r:0,c})];if(cell)cell.s=sty({b:1,fill:"D9D9D9",wrap:1})});
  sum["!rows"]=[{hpt:32}];
  XLSX.utils.book_append_sheet(wb,sum,"요약");
@@ -606,12 +660,14 @@ function renderDetail(){
   return `<tr><th class="cat" style="background:${c[2]};color:${dark?"#2b1d12":"#fff"}">${labelIn(i,t.dates[0].getTime(),t.dates[6].getTime())}</th>${W[i].map((n,d)=>`<td class="${d===TD?"tdy":""}">${n||""}</td>`).join("")}<td class="sum">${tot}</td><td>${n2(h)}</td><td>${g==null?"":g.toFixed(1)}</td><td class="pc" style="color:${p==null?"inherit":st(p)}">${p==null?"":p+"%"}</td></tr>`;
  };
  const totH=sumRow(dayTot)/4,Gsum=CATS.reduce((a,c)=>a+goal(c),0),TP=Math.round(totH/Gsum*100);
+ const wkv=t.dates.map(d=>wakeMin(toS(d.getTime()))),wkAvg=wakeAvg(wkv);
+ const wkrow=`<tr class="wkr"><th class="cat sm">기상시간</th>${wkv.map((m,i)=>`<td class="${i===TD?"tdy":""}" style="font-size:9px;padding:6px 1px">${fmtHm(m)}</td>`).join("")}<td colspan="2" style="font-size:10px;font-weight:700">${wkAvg==null?"":"평균 "+fmtHm(wkAvg)}</td><td colspan="2"></td></tr>`;
  return detailSeg()+weekNav(t)+`<div class="tbl-wrap"><table class="wk"><thead>
   <tr class="mrow"><th class="cat yr">${t.year}</th>${t.dates.map(d=>`<th>${d.getUTCMonth()+1}</th>`).join("")}<th colspan="2"></th><th class="hl">휴일수</th><th class="hv">${H}</th></tr>
   <tr><th class="cat"></th>${t.dates.map((d,i)=>`<th class="dtc ${HS.has(i)?"hol":""} ${i===TD?"now":""}" onclick="toggleHol(${i})">${d.getUTCDate()}</th>`).join("")}<th colspan="2" class="tot">total</th><th class="tot">목표</th><th class="tot">달성도</th></tr>
   <tr><th class="cat sm">목표 Activity</th>${t.names.map(d=>`<th class="dt">${d}</th>`).join("")}<th class="dt">칸</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th></tr>
  </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
- <tfoot><tr><th class="cat"></th>${dayTot.map((n,d)=>`<td class="${d===TD?"tdy":""}">${n}</td>`).join("")}<td class="sum">${sumRow(dayTot)}</td><td>${n2(totH)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td></tr></tfoot></table></div>
+ <tfoot><tr><th class="cat"></th>${dayTot.map((n,d)=>`<td class="${d===TD?"tdy":""}">${n}</td>`).join("")}<td class="sum">${sumRow(dayTot)}</td><td>${n2(totH)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td></tr>${wkrow}</tfoot></table></div>
  <div class="sub" style="margin-top:8px">이 주 목표 <b>${n2(wg.total)}h</b> = ${TOTAL}h${wg.adjH<1?` × ${wg.adjH.toFixed(3)}(휴일 ${wg.H}일, 추가 휴일은 50%)`:""} − 멍 ${n2(wg.meongH)}h. 카테고리별 목표도 같은 비율로 줄여요.</div>
  <div class="sub" style="margin-top:6px">파란 날짜는 휴일이에요(날짜를 탭하면 바뀜). 합계와 달성도는 엑셀처럼 멍을 뺀 값이에요. ${TD>=0&&TD<=6?`${HAS_REAL?"지난 날짜는 엑셀에서 가져온 실제 기록이에요.":"지난 요일은 예시 데이터이고,"} 오늘(${WD[new Date().getDay()]}요일)은 오늘 탭의 기록이 바로 반영돼요.`:t.wk<todayInfo().wk?(HAS_REAL?"엑셀에서 가져온 실제 기록이에요.":"지난 주는 예시 데이터예요."):"아직 오지 않은 주라 기록이 없어요."}</div>`;
 }
@@ -700,6 +756,17 @@ function renderRange(t){
    prog=mk({sub:wkSub,rate:actual/goalFull,dRate:done/W,actual,goalFull,paceH,proj:actual/done*W,dName:"주 진행률",dText:`${done}주 / ${W}주 완료 (끝난 주 기준)`,extra:cur});
   }
  } // 이름이 바뀐 카테고리는 이름이 같은 구간끼리 따로 집계해서 보여줌 (위치는 같고 이름만 다름)
+ // 기상시간 통계 (집계 카테고리와 별개)
+ const wrows=[];for(let u=fU;u<=tU;u+=DAY){const m=wakeMin(toS(u));if(m!=null)wrows.push({u,m})}
+ let wakeCard=`<div class="card"><h2>기상시간</h2><div class="sub">이 기간에는 입력된 기상시간이 없어요.</div></div>`;
+ if(wrows.length){
+  const wa=wrows.reduce((a,r)=>a+r.m,0)/wrows.length,sd=Math.sqrt(wrows.reduce((a,r)=>a+(r.m-wa)**2,0)/wrows.length);
+  const mn=wrows.reduce((a,r)=>r.m<a.m?r:a),mx=wrows.reduce((a,r)=>r.m>a.m?r:a);
+  const byWd=[1,2,3,4,5,6,0].map(w=>({n:WD[w],a:wakeAvg(wrows.filter(r=>new Date(r.u).getUTCDay()===w).map(r=>r.m))}));
+  wakeCard=`<div class="card"><h2>기상시간 <span class="sub">${wrows.length}일 / ${nd}일 입력</span></h2>
+  <div class="stat"><div><b>${fmtMin(wa)}</b><span class="sub">평균 (±${Math.round(sd)}분)</span></div><div><b>${fmtMin(mn.m)}</b><span class="sub">가장 이른 · ${fmtD(mn.u).slice(5)}</span></div><div><b>${fmtMin(mx.m)}</b><span class="sub">가장 늦은 · ${fmtD(mx.u).slice(5)}</span></div></div>
+  <div class="chips" style="margin-top:10px">${byWd.map(x=>`<span class="tag" style="font-size:12px;padding:5px 9px;margin-left:0">${x.n} ${x.a==null?"-":fmtHm(x.a)}</span>`).join("")}</div></div>`;
+ }
  const chg=[];
  CATS.forEach((c,i)=>{
   if(namesIn(i,fU,tU).length<2)return;
@@ -719,6 +786,7 @@ function renderRange(t){
   <tr><th class="cat"></th><th class="dt">h</th><th class="dt">h</th><th class="dt">h</th><th class="dt">%</th><th class="dt">%</th></tr>
  </thead><tbody>${CATS.map(row).join("")}${row(MEONG,CATS.length)}</tbody>
  <tfoot><tr><th class="cat"></th><td class="sum">${n2(totH)}</td><td>${n2(totH/weeks)}</td><td>${Gsum.toFixed(1)}</td><td class="pc tp">${TP}%</td><td>100%</td></tr></tfoot></table></div>
+ ${wakeCard}
  ${chgCard}
  <div class="sub" style="margin-top:8px">${HAS_REAL?"지난 날짜는 엑셀에서 가져온 실제 기록이고":"지난 날짜는 예시 데이터이고"}, 오늘은 오늘 탭의 기록이 반영돼요. 목표는 주마다 휴일(주말 포함 3일 이상이면 추가 휴일은 50%)과 멍 시간을 반영한 값이에요.</div>`;
 }
